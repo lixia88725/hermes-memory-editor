@@ -6,6 +6,14 @@
 
 这是一个为个人使用开发的独立辅助工具，**不是 Hermes 官方产品，也不是聊天客户端**。
 
+## 界面预览
+
+![Hermes Memory Editor — four-panel Markdown editor with Agent tabs](docs/images/editor-demo.png)
+
+*真实应用界面，使用虚构英文示例和通用路径；不包含个人文档或真实 Agent 配置。*
+
+*Actual application UI with fictional English sample content. No personal documents are shown.*
+
 ## 它能做什么？
 
 每个 Agent 对应四个并排的编辑区：

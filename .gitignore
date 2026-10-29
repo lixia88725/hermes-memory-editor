@@ -4,6 +4,11 @@
 !/AGENTS.md
 !/README.md
 !/GUIDE.md
+!/docs/
+/docs/*
+!/docs/images/
+/docs/images/*
+!/docs/images/editor-demo.png
 !/server.py
 !/local_history.py
 !/launcher.py
