@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Memory Editor</title>
+<link rel="stylesheet" href="vendor/vditor/dist/index.css">
+<link rel="stylesheet" href="vditor-editor.css">
+<style>
+/* Original style retained below; the bounded visual layer follows it. */
+:root {
+  --bg:#f5f5f7; --panel:#fff; --border:#dfe1e6; --text:#1d1d1f; --muted:#6e6e73;
+  --blue:#007aff; --green:#248a3d; --orange:#c93400; --red:#d70015; --shadow:0 1px 4px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box} html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;-webkit-font-smoothing:antialiased}
+#toolbar{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:8px 16px;background:rgba(255,255,255,.82);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.identity{min-width:0}.title{font-size:14px;font-weight:700}.title span{color:var(--blue)}
+.meta{display:flex;gap:8px;align-items:center;margin-top:3px;color:var(--muted);font-size:11px;min-width:0}.meta code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:58vw}
+.badge{display:inline-flex;align-items:center;border-radius:999px;padding:1px 7px;background:#e8f2ff;color:#075fae;font-size:10px;font-weight:700}.badge.off{background:#f0f0f2;color:#6e6e73}.badge.warn{background:#fff1e7;color:#a33a00}
+.actions{display:flex;align-items:center;gap:8px;flex-shrink:0}#global-status{font-size:11px;color:var(--muted);min-width:92px;text-align:right}.connected{color:var(--green)!important}.disconnected{color:var(--red)!important}
+button{font:600 11px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer}button:hover:not(:disabled){background:#f0f0f5}button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:var(--blue);border-color:var(--blue);color:#fff;padding:6px 14px}button.danger{color:var(--red)}
+#config-warning{display:none;padding:5px 14px;background:#fff4e8;color:#8a3900;border-bottom:1px solid #ffd8b5;font-size:11px}
+#panels{display:flex;flex:1;min-height:0;padding:8px 4px 0;gap:0}.panel{flex:1;min-width:0;margin:0 4px;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--border);border-radius:9px;box-shadow:var(--shadow)}
+.panel-header{padding:7px 10px;border-bottom:1px solid var(--border);background:#fafafa;display:flex;flex-direction:column;gap:4px}.panel-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.panel-name{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:750;letter-spacing:.03em}.dot{width:8px;height:8px;border-radius:50%}.memory .dot{background:var(--blue)}.user .dot{background:#34c759}.soul .dot{background:#ff9500}.agents .dot{background:#af52de}.panel-actions{display:flex;gap:5px}.panel-actions button{padding:3px 7px;font-size:10px}
+.panel-info{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:10px;white-space:nowrap}.path{overflow:hidden;text-overflow:ellipsis}.path:empty{display:none}.stats{font-variant-numeric:tabular-nums;flex-shrink:0;margin-left:auto}.stats.warn{color:var(--orange)}.stats.danger{color:var(--red)}
+.file-state{font-size:10px;color:var(--muted);min-height:14px}.file-state.unsaved{color:var(--orange)}.file-state.saving{color:var(--blue)}.file-state.saved{color:var(--green)}.file-state.error,.file-state.conflict{color:var(--red)}
+.editor-wrap{position:relative;flex:1;min-height:0}.editor-body{height:100%;overflow:hidden}.editor-body textarea:disabled{opacity:.55;cursor:not-allowed}
+.blocker{display:none;position:absolute;inset:0;z-index:5;padding:18px;background:rgba(255,255,255,.94);color:var(--red);font-size:12px}.blocker.show{display:block}.detail{margin-top:8px;color:var(--muted);overflow-wrap:anywhere}
+#hint{padding:5px 12px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:10px}kbd{padding:1px 5px;border:1px solid var(--border);border-radius:4px;background:#fff;font:10px -apple-system}
+@media(max-width:1250px) and (min-width:901px){#panels{overflow-x:auto}.panel{flex:0 0 300px}.meta code{max-width:28vw}}
+@media(max-width:900px){#panels{overflow:auto;flex-direction:column}.panel{min-height:350px;margin-bottom:8px}.meta code{max-width:34vw}}
+select{font:600 12px -apple-system;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--blue)}dialog{border:1px solid var(--border);border-radius:12px;max-width:420px;padding:22px}dialog::backdrop{background:rgba(0,0,0,.25)}dialog .choices{display:flex;gap:8px;margin-top:18px}
+/* Quiet document workspace: native type, neutral surfaces, semantic color only. */
+:root{color-scheme:light dark;--bg:#f5f4f1;--panel:#fff;--header:#fbfaf8;--border:#e3e1dc;--text:#292824;--muted:#706e68;--blue:#465e74;--green:#46634c;--orange:#936020;--red:#a33f38;--hover:#eeede9;--tint:#f0efeb;--warning-bg:#faf1df;--block-bg:rgba(255,255,255,.97);--shadow:none;--focus:#526d87}
+body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif}
+#toolbar{min-height:90px;padding:16px 24px 12px;gap:20px;background:var(--panel);border-bottom:0;backdrop-filter:none;align-items:center;flex-wrap:wrap}
+.identity{flex:1;min-width:0}.title{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:18px;font-weight:600;letter-spacing:-.025em}.title span{color:var(--muted);font-weight:400}
+select{min-height:32px;max-width:240px;padding:4px 28px 4px 10px;font:500 12px -apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);background:var(--header);border-radius:5px}
+.meta{gap:8px;flex-wrap:wrap;margin-top:10px;font-size:11px;line-height:1.6}.meta code{font:10px/1.6 "SF Mono",Monaco,monospace;max-width:220px;color:var(--muted)}.meta>span:not(#connection){margin-left:8px;color:var(--muted)}
+#shared-workspace{font-size:11px;color:var(--orange);opacity:.85;overflow-wrap:anywhere}.meta>span#shared-workspace{margin-left:2px;color:var(--orange)}
+#connection{font-size:11px}.connected{color:var(--green)!important}.disconnected{color:var(--red)!important}
+.actions{gap:14px}#global-status{font-size:12px;min-width:0;max-width:240px;overflow-wrap:anywhere}
+button{min-height:32px;padding:6px 11px;border-radius:5px;font:500 12px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;transition:background .12s,border-color .12s}button:hover:not(:disabled){background:var(--hover);border-color:var(--muted)}button:disabled{opacity:.4;cursor:not-allowed}button.primary{min-height:36px;padding:8px 15px;background:var(--text);border-color:var(--text);color:var(--panel);font-weight:600}button.primary:hover:not(:disabled){background:var(--muted);border-color:var(--muted)}
+button:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:3px}#refresh-profiles{font-size:11px;min-height:32px;background:transparent;color:var(--muted)}
+#config-warning{padding:10px 24px;background:var(--warning-bg);border-bottom:1px solid var(--border);color:var(--orange);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+#panels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:18px 20px 16px;overflow:hidden}
+.panel{margin:0;min-width:0;border-radius:7px;box-shadow:none;flex:initial}.panel:focus-within{border-color:var(--focus)}
+.panel-header{padding:15px 14px 12px;gap:9px;background:var(--header);min-height:128px}.panel-top{flex-wrap:wrap;gap:12px}.panel-name{gap:8px;font-size:12px;font-weight:650;letter-spacing:.045em;min-height:20px}.dot{display:none}.badge{padding:2px 6px;font-size:9px;letter-spacing:.02em;font-weight:500;background:var(--tint);color:var(--muted);border-radius:3px}.badge.off{background:var(--tint);color:var(--muted)}.badge.warn{background:var(--warning-bg);color:var(--orange)}
+.panel-actions{width:100%;gap:6px}.panel-actions button{font-size:11px;min-height:28px;padding:4px 8px;background:var(--panel)}.panel-actions button[data-restore]{color:var(--muted)}
+.panel-info{gap:4px;flex-wrap:wrap;white-space:normal;font-size:10px}.path{max-width:100%;white-space:nowrap}.stats{font:10px/1.6 "SF Mono",Monaco,monospace;margin-left:0;flex-shrink:1;overflow-wrap:anywhere;color:var(--muted)}.stats.warn{color:var(--orange)}.stats.danger{color:var(--red)}
+.file-state{min-height:16px;font-size:11px;line-height:1.5;overflow-wrap:anywhere}.file-state.saved{color:var(--muted)}.file-state.unsaved{color:var(--orange)}.file-state.saving{color:var(--blue)}.file-state.error,.file-state.conflict{color:var(--red)}
+.editor-wrap{background:var(--panel)}.editor-body textarea:focus-visible{outline:none}.editor-body textarea:disabled{opacity:.45}
+.blocker{padding:24px 18px;background:var(--block-bg);font-size:12px;line-height:1.7;overflow:auto}.detail{font-size:11px}
+#hint{padding:9px 20px;text-align:left;line-height:1.6;font-size:10px;background:var(--bg);flex-shrink:0}kbd{background:var(--panel);padding:2px 5px;font:10px -apple-system,BlinkMacSystemFont,sans-serif;margin-right:3px}
+dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;background:var(--panel);color:var(--text);border-radius:8px}dialog strong{font-size:18px;font-weight:600;letter-spacing:-.02em}dialog p{color:var(--muted);font-size:13px;margin:12px 0 24px}dialog .choices{flex-wrap:wrap;gap:8px;margin-top:0}dialog::backdrop{background:rgba(20,20,18,.4)}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1b;--panel:#242423;--header:#282827;--border:#3d3d39;--text:#e8e7e1;--muted:#aaa99f;--blue:#a4b9cb;--green:#a0b6a2;--orange:#dbb778;--red:#efa59d;--hover:#363633;--tint:#353531;--warning-bg:#342e23;--block-bg:rgba(36,36,35,.97);--focus:#9cb6ce;--editor-ink:#e8e7e1}.editor-body{--bg-primary:var(--panel);--text-primary:var(--text)}}
+@media(min-width:1000px) and (max-width:1250px){#panels{overflow:hidden}.panel{flex:initial}.meta code{max-width:150px}#toolbar{padding:16px 20px}}
+@media(max-width:999px){body{overflow:hidden}#toolbar{padding:16px;gap:12px;min-height:0}.title{font-size:17px}.meta code{max-width:180px}#panels{grid-template-columns:repeat(2,minmax(0,1fr));overflow:auto;gap:12px;padding:14px;align-content:start}.panel{min-height:420px;height:54vh;margin:0}.actions{margin-left:auto}.panel-header{min-height:128px}#hint{padding:8px 16px}}
+@media(max-width:600px){.title{gap:6px}.meta{gap:5px;font-size:10px}.meta code{max-width:calc(100vw - 100px)}.meta>span:not(#connection){margin-left:0}.actions{width:100%;justify-content:space-between;flex-direction:row-reverse}.actions .primary{flex-shrink:0}#global-status{text-align:left;max-width:45%}#panels{grid-template-columns:minmax(0,1fr);padding:12px;gap:12px}.panel{height:440px;min-height:440px}.panel-header{min-height:122px}.panel-actions button{min-height:32px;padding:6px 10px}#hint{font-size:10px}}
+/* Compact panel chrome: keep space for the document, not fixed-height headers. */
+.panel-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:8px 10px;gap:5px 8px;min-height:0}
+.panel-top{grid-column:1 / -1;gap:6px 10px;align-items:center}
+.panel-name{min-height:20px;font-size:11px;letter-spacing:.025em;gap:5px}
+.panel-actions{width:auto;margin-left:auto;gap:5px;flex-shrink:0}
+.panel-actions button{min-height:26px;padding:3px 7px;font-size:10px}
+.panel-info{min-width:0;gap:3px;line-height:1.4}
+.stats{font-size:9px;line-height:1.5}
+.file-state{min-height:0;max-width:120px;font-size:10px;line-height:1.4;text-align:right}
+@media(max-width:600px){.panel-header{min-height:0;padding:8px 10px}.panel-actions button{min-height:30px;padding:4px 8px}.panel-name{font-size:11px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
+#history-dialog{width:min(1120px,calc(100vw - 24px));max-width:1120px;max-height:92vh;padding:20px;overflow:auto}
+#history-dialog .history-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#history-dialog p{margin:10px 0;font-size:12px;line-height:1.6}
+.history-selection{display:block;margin-top:16px;font-size:12px;font-weight:600}#history-list{width:100%;max-width:none;margin:6px 0 12px;min-height:36px}
+.history-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+#history-mode{display:inline-flex;padding:3px;gap:3px;background:var(--tint);border:1px solid var(--border);border-radius:7px}
+#history-mode button{border:1px solid transparent;background:transparent;min-height:32px;padding:5px 12px;color:var(--muted)}
+#history-mode button[aria-pressed="true"]{background:var(--panel);border-color:var(--border);color:var(--text);font-weight:600}
+#history-summary{font-size:12px;color:var(--muted)}
+#history-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0 16px}
+.history-pane{min-width:0;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.history-pane header{padding:10px 12px;background:var(--header);border-bottom:1px solid var(--border)}
+.history-pane h3{font-size:13px;margin:0;font-weight:600}.history-pane small{display:block;color:var(--muted);font-size:11px;margin-top:4px;overflow-wrap:anywhere}
+.history-content{height:38vh;min-height:180px;overflow:auto;padding:10px 0;font:12px/1.8 Menlo,monospace}
+.history-line{white-space:pre-wrap;overflow-wrap:anywhere;padding:2px 12px;min-height:1.8em}
+.history-line code{font:inherit}.change-label{display:block;font:500 10px/1.6 -apple-system,BlinkMacSystemFont,sans-serif;margin-bottom:2px}
+.history-line.current-only{background:#eaf4ed;color:#244e31;border-left:3px solid #71967b;padding-left:9px}
+.history-line.historical-only{background:#fbeeed;color:#7c332f;border-left:3px solid #ba807a;padding-left:9px}
+.history-empty{padding:12px;color:var(--muted);font:12px/1.7 -apple-system,BlinkMacSystemFont,sans-serif}
+#history-error{color:var(--red);font-size:12px;overflow-wrap:anywhere}#history-draft{color:var(--orange)}#history-dialog .choices{justify-content:flex-end}
+@media(prefers-color-scheme:dark){.history-line.current-only{background:#263b2d;color:#c5dfcc;border-color:#7da787}.history-line.historical-only{background:#442d2b;color:#f0c6c1;border-color:#ba807a}}
+@media(max-width:600px){#history-dialog{padding:14px;max-height:94vh}#history-preview{grid-template-columns:minmax(0,1fr);gap:12px}.history-content{height:25vh;min-height:130px}.history-tools{gap:8px}.history-top strong{font-size:16px}}
+/* Heroicons outline icons (MIT), matching the native lightweight controls. */
+.panel-actions .icon-button{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:5px;min-height:30px;background:transparent;border-color:transparent;color:var(--muted)}
+.panel-actions .icon-button:hover:not(:disabled){background:var(--hover);border-color:var(--border);color:var(--text)}
+.icon-button svg{width:17px;height:17px;flex:none}
+#refresh-profiles{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:6px;border-color:transparent;flex-shrink:0}
+#refresh-profiles:hover:not(:disabled){border-color:var(--border)}
+/* Folder tabs sit on the workspace seam, not in the title toolbar. */
+#agent-bar{display:flex;align-items:stretch;gap:8px;padding:0 20px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;min-width:0}
+#agent-tabs{display:flex;align-items:flex-end;gap:12px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;flex:0 1 auto;margin-bottom:-1px;padding:4px 10px 0}
+.agent-tab{position:relative;flex:none;white-space:nowrap;min-height:36px;padding:7px 15px;border:1px solid transparent;border-bottom-color:var(--border);border-radius:11px 11px 0 0;background:transparent;color:var(--muted);font-size:12px}
+.agent-tab:hover:not([aria-disabled="true"]){background:var(--header);border-color:var(--border)}
+.agent-tab[aria-selected="true"],.agent-tab[aria-selected="true"]:hover{background:var(--bg);border-color:var(--border);border-bottom-color:var(--bg);color:var(--text);font-weight:600}
+.agent-tab[aria-selected="true"]::before,.agent-tab[aria-selected="true"]::after{content:"";position:absolute;bottom:-1px;width:10px;height:10px;pointer-events:none;background:transparent;z-index:1}
+.agent-tab[aria-selected="true"]::before{left:-10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-bottom-right-radius:10px;box-shadow:5px 5px 0 4px var(--bg)}
+.agent-tab[aria-selected="true"]::after{right:-10px;border-left:1px solid var(--border);border-bottom:1px solid var(--border);border-bottom-left-radius:10px;box-shadow:-5px 5px 0 4px var(--bg)}
+.agent-tab:focus-visible{outline:2px solid var(--focus);outline-offset:-4px}
+.agent-tab[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+#agent-bar #refresh-profiles{align-self:center;margin:2px 0}
+#panels:focus-visible{outline:2px solid var(--focus);outline-offset:-3px}
+@media(max-width:999px){#agent-bar{padding:0 14px}}
+@media(max-width:600px){#agent-bar{padding:0 12px}.agent-tab{padding:7px 12px}}
+#save-all{min-width:86px}
+#save-all[aria-busy="true"]{opacity:.8;cursor:progress}
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <div class="identity">
+    <div class="title"><span>Hermes</span> Memory Editor</div>
+    <div class="meta"><span id="connection">● Connecting</span><span>Hermes</span><code id="home"></code><span>Workspace</span><code id="workspace"></code><span id="shared-workspace" role="status" hidden></span></div>
+  </div>
+  <div class="actions"><span id="global-status"></span><button id="save-all" class="primary">Save</button></div>
+</div>
+<div id="config-warning"></div>
+<!-- Hidden select is the existing validated switching controller, not a second UI. -->
+<select id="profile" hidden aria-hidden="true" tabindex="-1" disabled></select>
+<div id="agent-bar"><div id="agent-tabs" role="tablist" aria-label="Agent" aria-orientation="horizontal"></div><button id="refresh-profiles" class="icon-button" title="Refresh Agent list" aria-label="Refresh Agent list"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+</svg>
+</button></div>
+<div id="panels" role="tabpanel" aria-label="Agent documents" tabindex="0">
+  <section class="panel memory" id="panel-memory">
+    <header class="panel-header">
+      <div class="panel-top"><div class="panel-name"><span class="dot"></span>MEMORY.md <span class="badge" id="enabled-memory"></span></div><div class="panel-actions"><button class="icon-button" data-reload="memory" title="Reload" aria-label="Reload MEMORY.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+</svg>
+</button><button class="icon-button" data-history="memory" title="History" aria-label="History MEMORY.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+</svg>
+</button></div></div>
+      <div class="panel-info"><span class="path" id="path-memory"></span><span class="stats" id="stats-memory">—</span></div><div class="file-state" id="state-memory">Loading…</div>
+    </header><div class="editor-wrap"><div class="editor-body" id="ed-memory"></div><div class="blocker" id="blocker-memory"></div></div>
+  </section>
+  <section class="panel user" id="panel-user">
+    <header class="panel-header">
+      <div class="panel-top"><div class="panel-name"><span class="dot"></span>USER.md <span class="badge" id="enabled-user"></span></div><div class="panel-actions"><button class="icon-button" data-reload="user" title="Reload" aria-label="Reload USER.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+</svg>
+</button><button class="icon-button" data-history="user" title="History" aria-label="History USER.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+</svg>
+</button></div></div>
+      <div class="panel-info"><span class="path" id="path-user"></span><span class="stats" id="stats-user">—</span></div><div class="file-state" id="state-user">Loading…</div>
+    </header><div class="editor-wrap"><div class="editor-body" id="ed-user"></div><div class="blocker" id="blocker-user"></div></div>
+  </section>
+  <section class="panel soul" id="panel-soul">
+    <header class="panel-header">
+      <div class="panel-top"><div class="panel-name"><span class="dot"></span>SOUL.md</div><div class="panel-actions"><button class="icon-button" data-reload="soul" title="Reload" aria-label="Reload SOUL.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+</svg>
+</button><button class="icon-button" data-history="soul" title="History" aria-label="History SOUL.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+</svg>
+</button></div></div>
+      <div class="panel-info"><span class="path" id="path-soul"></span><span class="stats" id="stats-soul">—</span></div><div class="file-state" id="state-soul">Loading…</div>
+    </header><div class="editor-wrap"><div class="editor-body" id="ed-soul"></div><div class="blocker" id="blocker-soul"></div></div>
+  </section>
+  <section class="panel agents" id="panel-agents">
+    <header class="panel-header">
+      <div class="panel-top"><div class="panel-name"><span class="dot"></span>AGENTS.md</div><div class="panel-actions"><button class="icon-button" data-reload="agents" title="Reload" aria-label="Reload AGENTS.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+</svg>
+</button><button class="icon-button" data-history="agents" title="History" aria-label="History AGENTS.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+</svg>
+</button></div></div>
+      <div class="panel-info"><span class="path" id="path-agents"></span><span class="stats" id="stats-agents">—</span></div><div class="file-state" id="state-agents">Loading…</div>
+    </header><div class="editor-wrap"><div class="editor-body" id="ed-agents"></div><div class="blocker" id="blocker-agents"></div></div>
+  </section>
+</div>
+<div id="hint"><kbd>⌘S</kbd> save modified files · close or hide this tab and the server exits after five minutes</div>
+<dialog id="switch-dialog"><strong>Unsaved changes</strong><p>Save your changes before switching Agent?</p><div class="choices"><button id="switch-save" class="primary">Save and switch</button><button id="switch-discard">Discard and switch</button><button id="switch-cancel">Cancel</button></div></dialog>
+<script id="vditorI18nScriptzh_CN" src="vendor/vditor/dist/js/i18n/zh_CN.js"></script>
+<script id="vditorIconScript" src="vendor/vditor/dist/js/icons/ant.js"></script>
+<script id="vditorLuteScript" src="vendor/vditor/dist/js/lute/lute.min.js"></script>
+<script src="vendor/vditor/dist/index.min.js"></script>
+<script src="vditor-adapter.js"></script>
+<dialog id="history-dialog" aria-labelledby="history-title">
+  <div class="history-top"><strong id="history-title">版本历史</strong><button id="history-close">关闭</button></div>
+  <p>比较方向：从所选历史版本到当前已保存版本。左侧来自磁盘，不含未保存草稿。选择版本仅预览，不会写入文件。</p>
+  <label class="history-selection" for="history-list">选择历史版本</label><select id="history-list" aria-label="选择历史版本"></select>
+  <div class="history-tools"><div id="history-mode" role="group" aria-label="比较显示方式"><button id="history-full" aria-pressed="true">完整内容</button><button id="history-changes" aria-pressed="false">只看差异</button></div><span id="history-summary" role="status"></span></div>
+  <div id="history-error" role="status"></div>
+  <div id="history-preview">
+    <section class="history-pane" aria-labelledby="history-current-title"><header><h3 id="history-current-title">当前已保存版本</h3><small>磁盘内容 · 不含未保存草稿</small></header><div id="history-current" class="history-content" tabindex="0" aria-label="当前已保存内容"></div></section>
+    <section class="history-pane" aria-labelledby="history-selected-title"><header><h3 id="history-selected-title">所选历史版本</h3><small id="history-timestamp">尚未选择版本</small></header><div id="history-selected" class="history-content" tabindex="0" aria-label="所选历史内容"></div></section>
+  </div>
+  <p id="history-draft" hidden>此文件有未保存草稿，已保留。请关闭历史并先保存或处理草稿，再恢复版本。</p>
+  <p>恢复前会保留当前已保存内容，并新增一条版本记录；之后仍可回退。外部编辑的中间版本不会自动记录。</p>
+  <div class="choices"><button id="history-restore" class="danger" disabled>恢复此版本…</button></div>
+</dialog>
+<script>
+'use strict';
+const tokenParam = new URLSearchParams(location.hash.slice(1)).get('token') || '';
+if (tokenParam) sessionStorage.setItem('hermes-memory-editor-token', tokenParam);
+const TOKEN = tokenParam || sessionStorage.getItem('hermes-memory-editor-token') || '';
+if (tokenParam) history.replaceState(null, '', location.pathname);
+const DELIMITER='\n§\n';
+const KEYS=['memory','user','soul','agents'];
+const files={memory:{},user:{},soul:{},agents:{}};
+let editors={},saving=false,online=false,currentProfile="",switching=false,epoch=0,loading=0;
+let initializing=true,refreshing=false,profileAvailable=false,statusSequence=0;
+let historyOpen=false,historyContext=null,historyRequest=0,historyPreview=null,historyDiff=true;
+function composing(){return KEYS.some(k=>editors[k]?.isComposing())}
+function flushEditors(){for(const k of KEYS)editors[k]?.getValue()}
+function busy(){return initializing||saving||switching||refreshing||loading>0||historyOpen||composing()}
+function syncEditors(){for(const key of KEYS)editors[key]?.setDisabled(!files[key].readable||!!files[key].pending||saving||switching||refreshing||!profileAvailable)}
+function invalidateStatus(){statusSequence++}
+
+function chars(s){return Array.from(s).length}
+function entries(s){const seen=new Set(), out=[];for(const p of s.split(DELIMITER)){const v=p.trim();if(v&&!seen.has(v)){seen.add(v);out.push(v)}}return out}
+function metrics(key,text){if(key==='soul'||key==='agents')return {raw:chars(text),usage:null};const normalized=entries(text).join(DELIMITER);return {raw:chars(text),usage:chars(normalized)}}
+function stateEl(key){return document.getElementById('state-'+key)}
+function setState(key,text,kind=''){const e=stateEl(key);e.textContent=text;e.className='file-state '+kind}
+function setGlobal(text,kind=''){const e=document.getElementById('global-status');e.textContent=text;e.className=kind}
+function setOnline(value){online=value;const e=document.getElementById('connection');e.textContent=value?'● Connected':'● Server disconnected';e.className=value?'connected':'disconnected'}
+function updatePath(key,data){const e=document.getElementById('path-'+key);let text='';if(!data.exists||!data.readable)text=data.path||'';else if(data.linked)text='Linked → '+(data.actual_path||data.path||'');e.textContent=text;e.title=text}
+function block(key,message,detail=''){const e=document.getElementById('blocker-'+key);e.innerHTML='<strong>'+escapeHtml(message)+'</strong>'+(detail?'<div class="detail">'+escapeHtml(detail)+'</div>':'');e.classList.add('show');editors[key]?.setDisabled(true)}
+function unblock(key){document.getElementById('blocker-'+key).classList.remove('show');syncEditors()}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function api(path,options={}){if(path.startsWith('/api/')&&path!='/api/profiles'&&!options.method)path+=(path.includes('?')?'&':'?')+'profile='+encodeURIComponent(currentProfile);const headers=Object.assign({'X-Hermes-Editor-Token':TOKEN},options.headers||{});const r=await fetch(path,Object.assign({},options,{headers}));let d={};try{d=await r.json()}catch(_){d={error:'Invalid server response'}}if(!r.ok){const err=new Error(d.error||('HTTP '+r.status));err.status=r.status;err.data=d;throw err}setOnline(true);return d}
+function updateStats(key){const f=files[key], text=editors[key]?.getValue?.()||'', m=metrics(key,text), e=document.getElementById('stats-'+key);e.className='stats';if(!f.readable){e.textContent='—';return}if(key==='soul'){e.textContent=m.raw+' chars · no memory budget';return}if(key==='agents'){e.textContent=m.raw+' chars · workspace context';return}const limit=f.limit||0,pct=limit?Math.floor(m.usage/limit*100):0;e.textContent='budget '+m.usage+'/'+limit+' · raw '+m.raw;if(pct>=90)e.classList.add('danger');else if(pct>=75)e.classList.add('warn')}
+function updateEnabled(key,value){if(key==='soul'||key==='agents')return;const e=document.getElementById('enabled-'+key);e.textContent=value?'enabled':'disabled';e.className='badge '+(value?'':'off')}
+// One adoption path for individual reloads and an atomic profile reveal.
+function adoptDocument(key,f,d){
+  Object.assign(f,d,{dirty:false,conflict:false,version:(f.version||0)+1});updatePath(key,d);updateEnabled(key,d.enabled);
+  if(!d.exists||!d.readable){editors[key].setValue('');block(key,d.error||'File is unavailable',d.path);setState(key,'Unavailable','error')}
+  else{unblock(key);editors[key].setValue(d.content);setState(key,d.enabled===false?'Loaded · feature disabled':'Loaded','saved')}
+  updateStats(key);
+}
+async function loadOne(key,force=false){
+  if(busy()||!profileAvailable)return false;
+  const ticket=epoch,f=files[key];
+  if(f.dirty&&!force&&!confirm('Discard unsaved changes in '+key.toUpperCase()+'.md?'))return false;
+  const version=f.version, snapshot=editors[key].getValue(),request=Symbol('read');
+  f.pending=request;loading++;invalidateStatus();lockControls();setState(key,'Loading…');
+  try{
+    const d=await api('/api/read/'+key);
+    if(ticket!==epoch||files[key]!==f||f.pending!==request)return false;
+    if(f.version!==version||editors[key].getValue()!==snapshot){f.dirty=true;f.conflict=true;setState(key,'Local edits preserved; reload again','conflict');return false}
+    adoptDocument(key,f,d);return true;
+  }catch(e){if(ticket===epoch&&files[key]===f&&f.pending===request){setOnline(false);f.readable=false;block(key,'Read failed',e.message);setState(key,e.message,'error')}return false}
+  finally{if(f.pending===request)delete f.pending;loading=Math.max(0,loading-1);lockControls()}
+}
+function lockControls(){const active=busy();syncAgentTabs();document.getElementById('profile').disabled=active;document.getElementById('refresh-profiles').disabled=active;const saveButton=document.getElementById('save-all');saveButton.disabled=active||!profileAvailable;saveButton.textContent=saving?'Saving…':'Save';saveButton.setAttribute('aria-busy',String(saving));document.querySelectorAll('[data-reload],[data-history]').forEach(b=>{b.disabled=active||!profileAvailable||(b.dataset.history&&!files[b.dataset.history]?.readable)});syncEditors()}
+// Keep switching validation and dirty/save/epoch safeguards in switchProfile.
+function syncAgentTabs(){
+  const tabs=[...document.querySelectorAll('.agent-tab')];
+  for(const tab of tabs){const selected=tab.dataset.profile===currentProfile;tab.setAttribute('aria-selected',String(selected));tab.setAttribute('aria-disabled',String(busy()||tab.dataset.unavailable==='true'))}
+  const selected=tabs.find(t=>t.dataset.profile===currentProfile);
+  if(selected){document.getElementById('panels').setAttribute('aria-labelledby',selected.id);if(selected.dataset.selected!=='true')selected.scrollIntoView({block:'nearest',inline:'nearest'})}
+  for(const tab of tabs)tab.dataset.selected=String(tab===selected);
+}
+function renderAgentTabs(){
+  const list=document.getElementById('agent-tabs'),focused=document.activeElement?.dataset.profile;
+  list.replaceChildren();
+  for(const [i,option] of [...document.getElementById('profile').options].entries()){
+    const tab=document.createElement('button');tab.type='button';tab.className='agent-tab';tab.id='agent-tab-'+i;tab.setAttribute('role','tab');tab.setAttribute('aria-controls','panels');tab.dataset.profile=option.value;tab.dataset.unavailable=String(option.disabled);tab.textContent=option.textContent;tab.tabIndex=option.value===currentProfile?0:-1;
+    tab.onclick=()=>{if(busy()||option.disabled)return;focusAgentTab(tab);switchProfile(option.value)};
+    tab.onkeydown=e=>{
+      if(busy())return;
+      const tabs=[...list.querySelectorAll('.agent-tab')].filter(t=>t.dataset.unavailable!=='true');const index=tabs.indexOf(tab);let next;
+      if(e.key==='ArrowRight')next=tabs[(index+1)%tabs.length];
+      else if(e.key==='ArrowLeft')next=tabs[(index-1+tabs.length)%tabs.length];
+      else if(e.key==='Home')next=tabs[0];else if(e.key==='End')next=tabs.at(-1);else return;
+      e.preventDefault();if(next)focusAgentTab(next);
+    };list.appendChild(tab);
+  }
+  syncAgentTabs();
+  const restore=[...list.children].find(t=>t.dataset.profile===focused);if(restore)focusAgentTab(restore);
+}
+function focusAgentTab(tab){for(const t of document.querySelectorAll('.agent-tab'))t.tabIndex=t===tab?0:-1;tab.focus({preventScroll:true});tab.scrollIntoView({block:'nearest',inline:'nearest'})}
+async function refreshProfiles(){
+  if(busy())return false;
+  refreshing=true;invalidateStatus();lockControls();
+  try{
+    const d=await api('/api/profiles'),select=document.getElementById('profile');
+    select.replaceChildren();for(const p of d.profiles){const option=document.createElement('option');option.value=p.name;option.textContent=p.name;select.appendChild(option)}
+    if(!currentProfile)currentProfile=d.initial;
+    profileAvailable=d.profiles.some(p=>p.name===currentProfile);
+    if(!profileAvailable){const option=document.createElement('option');option.value=currentProfile;option.textContent=currentProfile+' (unavailable)';option.disabled=true;select.appendChild(option);setGlobal('Current Agent was removed; local edits retained. Select an Agent.','disconnected')}
+    select.value=currentProfile;renderAgentTabs();return d;
+  }finally{refreshing=false;lockControls()}
+}
+async function loadProfile(){
+  switching=true;epoch++;invalidateStatus();lockControls();const ticket=epoch;
+  try{
+    for(const k of KEYS){files[k]={dirty:false,version:0,hash:null,limit:null};editors[k].setValue('');updateStats(k);updatePath(k,{});block(k,'Loading…')}
+    // Network and per-file validation overlap. Adopt only after all reads settle,
+    // in one task, so the four documents appear in the same browser paint.
+    const [meta,documents]=await Promise.all([api('/api/meta'),Promise.all(KEYS.map(async key=>{
+      try{return {data:await api('/api/read/'+key)}}catch(error){return {error}}
+    }))]);if(ticket!==epoch)return;
+    document.getElementById('home').textContent=meta.home;document.getElementById('home').title=meta.home;document.getElementById('workspace').textContent=meta.workspace||'Not configured';const shared=document.getElementById('shared-workspace');shared.textContent=meta.shared_workspace?.length?'共享 Workspace · '+meta.shared_workspace.join(', '):'';shared.hidden=!shared.textContent;shared.title=shared.textContent?'AGENTS.md 与这些 Agent 共用同一个文件，修改会同时影响它们：'+meta.shared_workspace.join(', '):'';const w=document.getElementById('config-warning');w.textContent=meta.config_warning||'';w.style.display=w.textContent?'block':'none';
+    for(const [i,k] of KEYS.entries()){
+      const result=documents[i];
+      if(result.error){files[k].readable=false;block(k,'Read failed',result.error.message);setState(k,result.error.message,'error');setOnline(false)}
+      else adoptDocument(k,files[k],result.data);
+    }
+  }catch(e){if(ticket===epoch){setOnline(false);KEYS.forEach(k=>{files[k]={};editors[k].setValue('');block(k,'Cannot load Agent',e.message)});setGlobal(e.message,'disconnected')}}
+  finally{switching=false;lockControls()}
+}
+function switchChoice(){return new Promise(resolve=>{const d=document.getElementById('switch-dialog');const finish=v=>{d.close();resolve(v)};document.getElementById('switch-save').onclick=()=>finish('save');document.getElementById('switch-discard').onclick=()=>finish('discard');document.getElementById('switch-cancel').onclick=()=>finish('cancel');d.oncancel=e=>{e.preventDefault();finish('cancel')};d.showModal()})}
+async function switchProfile(next){
+  flushEditors();const select=document.getElementById('profile');select.value=currentProfile;
+  if(busy()||next===currentProfile||!Array.from(select.options).some(o=>o.value===next&&!o.disabled))return;
+  switching=true;invalidateStatus();lockControls();
+  try{
+    if(KEYS.some(k=>files[k].dirty)){
+      const choice=await switchChoice();if(choice==='cancel')return;
+      if(choice==='save'){await saveAll(true);if(KEYS.some(k=>files[k].dirty))return}
+    }
+    currentProfile=next;profileAvailable=true;select.value=next;await loadProfile();
+  }finally{switching=false;lockControls()}
+}
+function actualChange(key,text,normalized){const f=files[key];if(!f.readable)return;f.dirty=text!==f.content;f.version=(f.version||0)+1;setState(key,f.dirty?(normalized?'Unsaved · IR may normalize Markdown':'Unsaved changes'):'No changes',f.dirty?'unsaved':'saved');updateStats(key)}
+async function loadAll(){lockControls();try{for(const k of KEYS)editors[k]=await createDocumentEditor(k,actualChange,lockControls);initializing=false;lockControls();await refreshProfiles();await loadProfile()}catch(e){setGlobal(e.message,'disconnected');KEYS.forEach(k=>block(k,'Editor initialization / profile discovery failed',e.message))}}
+
+async function saveOne(key){
+  if(!saving||loading||refreshing||!profileAvailable)return false;
+  const f=files[key];if(!f.dirty)return true;
+  if(!f.readable||!f.hash||!f.target_id){setState(key,'Cannot save an unread file','error');return false}
+  const snapshot=editors[key].getValue(),version=f.version,base=f.hash,ticket=epoch;
+  setState(key,'Saving…','saving');
+  try{
+    const d=await api('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:currentProfile,key,content:snapshot,base_hash:base,target_id:f.target_id})});
+    if(ticket!==epoch||files[key]!==f)return false;
+    Object.assign(f,d,{hash:d.hash,backups:d.backups});
+    if(f.version===version&&editors[key].getValue()===snapshot){f.dirty=false;setState(key,d.history_warning||d.retention_warning||(d.unchanged?'No changes':'Saved · version recorded'),d.history_warning||d.retention_warning?'error':'saved')}
+    else{f.dirty=true;setState(key,'Saved snapshot; newer edits remain','unsaved')}
+    updateStats(key);return true;
+  }catch(e){if(ticket===epoch&&files[key]===f){if(e.status===409){f.conflict=true;setState(key,'Conflict: disk changed; reload before saving','conflict')}else setState(key,e.message,'error')}return false}
+}
+async function saveAll(forSwitch=false){
+  // DOM events are not an internal Save-and-switch capability.
+  if(composing()){setGlobal("Finish text composition before saving");return false}flushEditors();
+  if(saving||loading||refreshing||historyOpen||(switching&&forSwitch!==true)||!profileAvailable)return false;
+  saving=true;invalidateStatus();lockControls();setGlobal('Saving…');let ok=0,fail=0;
+  try{for(const key of KEYS){if(!files[key].dirty)continue;(await saveOne(key))?ok++:fail++}}
+  finally{saving=false;lockControls()}
+  if(fail)setGlobal(fail+' file(s) failed','disconnected');else if(ok)setGlobal(ok+' file(s) saved','connected');else setGlobal('No changes');
+  setTimeout(()=>{if(!busy())setGlobal('')},3500);return !fail;
+}
+async function restoreVersion(key,revision,date){
+  if(busy()||!profileAvailable)return false;
+  const f=files[key];if(!f.readable||!f.target_id)return false;
+  if(f.dirty){setState(key,'请先保存或处理未保存草稿，再恢复版本','unsaved');return false}
+  if(!confirm('恢复文件：'+(f.path||key.toUpperCase()+'.md')+'\n所选时间：'+date+'\n\n当前已保存内容会先保留，恢复将新增版本记录，之后仍可回退。\n确定恢复此版本？'))return false;
+  const ticket=epoch,version=f.version,snapshot=editors[key].getValue(),request=Symbol('restore');
+  f.pending=request;saving=true;invalidateStatus();lockControls();setState(key,'Restoring…','saving');
+  try{
+    const d=await api('/api/restore-version',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:currentProfile,key,revision,confirmed:true,base_hash:f.hash,target_id:f.target_id})});
+    if(ticket!==epoch||files[key]!==f||f.pending!==request)return false;
+    if(f.version!==version||editors[key].getValue()!==snapshot){f.dirty=true;f.conflict=true;setState(key,'Local edits preserved; reload before saving','conflict');return false}
+    Object.assign(f,d,{dirty:false,conflict:false,version:(f.version||0)+1});editors[key].setValue(d.content);updatePath(key,d);setState(key,d.history_warning||d.retention_warning||'Restored · new version recorded',d.history_warning||d.retention_warning?'error':'saved');updateStats(key);return true;
+  }catch(e){if(ticket===epoch&&files[key]===f){if(e.status===409)f.conflict=true;setState(key,e.message,e.status===409?'conflict':'error')}return false}
+  finally{if(f.pending===request)delete f.pending;saving=false;lockControls()}
+}
+function closeHistory(){historyRequest++;historyOpen=false;historyContext=null;historyPreview=null;document.getElementById('history-dialog').close();lockControls()}
+// Match Python splitlines(keepends=True), including CRLF and Unicode separators.
+function historyLines(text){return text.match(/[^\n\r\v\f\x1c-\x1e\x85\u2028\u2029]*(?:\r\n|[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]|$)/g)?.filter(s=>s!=='')||[]}
+function historyMessage(pane,text){const e=document.createElement('div');e.className='history-empty';e.textContent=text;pane.appendChild(e)}
+function renderHistoryPreview(){
+  document.getElementById('history-full').setAttribute('aria-pressed',String(!historyDiff));
+  document.getElementById('history-changes').setAttribute('aria-pressed',String(historyDiff));
+  const left=document.getElementById('history-current'),right=document.getElementById('history-selected');
+  left.replaceChildren();right.replaceChildren();document.getElementById('history-summary').textContent='';
+  if(!historyPreview){
+    if(historyContext?.current_content!==undefined){for(const text of historyLines(historyContext.current_content)){const e=document.createElement('div');e.className='history-line';e.textContent=text;left.appendChild(e)}}
+    else historyMessage(left,'等待磁盘比较内容');
+    historyMessage(right,'请选择历史版本');return;
+  }
+  const d=historyPreview,current=historyLines(d.current_content),selected=historyLines(d.content);
+  let additions=0,removals=0;
+  function append(pane,lines,start,end,kind){
+    if(historyDiff&&kind==='equal')return;
+    for(let i=start;i<end;i++){
+      const row=document.createElement('div');row.className='history-line'+(kind==='equal'?'':' '+kind);
+      if(kind!=='equal'){const label=document.createElement('span');label.className='change-label';label.textContent=kind==='current-only'?'当前新增':'历史中有，当前已移除';row.appendChild(label)}
+      const code=document.createElement('code');code.textContent=lines[i];row.appendChild(code);
+      if(!/[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]$/.test(lines[i])){const endLabel=document.createElement('span');endLabel.className='change-label';endLabel.textContent='末行无换行';row.appendChild(endLabel)}
+      pane.appendChild(row);
+    }
+  }
+  for(const [tag,a,b,c,e] of d.comparison){
+    const equal=tag==='equal';if(!equal){additions+=b-a;removals+=e-c}
+    append(left,current,a,b,equal?'equal':'current-only');append(right,selected,c,e,equal?'equal':'historical-only');
+  }
+  document.getElementById('history-summary').textContent=additions||removals?'当前新增 '+additions+' 行 · 当前已移除 '+removals+' 行':'两个版本内容相同';
+  if(!left.childNodes.length)historyMessage(left,historyDiff?'没有当前新增内容':'（空文件）');
+  if(!right.childNodes.length)historyMessage(right,historyDiff?'没有已移除的历史内容':'（空文件）');
+}
+async function selectHistory(){
+  const c=historyContext,revision=document.getElementById('history-list').value,request=++historyRequest;
+  historyPreview=null;renderHistoryPreview();document.getElementById('history-restore').disabled=true;
+  document.getElementById('history-timestamp').textContent=c?.versions?.find(v=>v.revision===revision)?.displayDate||'尚未选择版本';
+  document.getElementById('history-error').textContent='';if(!c||!revision)return;
+  try{
+    const d=await api('/api/preview/'+c.key+'?target_id='+c.target_id+'&revision='+revision);if(!historyOpen||request!==historyRequest)return;
+    if(c.current_hash&&c.current_hash!==d.current_hash)throw new Error('磁盘内容已变化。左侧保留打开时的比较基准，请关闭历史并重新打开。');
+    c.current_hash=d.current_hash;c.current_content=d.current_content;
+    historyPreview=d;renderHistoryPreview();document.getElementById('history-restore').disabled=!!files[c.key].dirty;
+  }
+  catch(e){if(historyOpen&&request===historyRequest)document.getElementById('history-error').textContent=e.message}
+}
+async function openHistory(key){
+  if(busy()||!files[key].readable)return;
+  const c={key,target_id:files[key].target_id,profile:currentProfile,epoch};historyContext=c;historyOpen=true;historyDiff=false;historyPreview=null;
+  const request=++historyRequest,list=document.getElementById('history-list');list.replaceChildren();renderHistoryPreview();document.getElementById('history-title').textContent=key.toUpperCase()+'.md · 版本历史';document.getElementById('history-timestamp').textContent='尚未选择版本';document.getElementById('history-draft').hidden=!files[key].dirty;document.getElementById('history-error').textContent='正在加载…';document.getElementById('history-restore').disabled=true;document.getElementById('history-dialog').showModal();invalidateStatus();lockControls();
+  try{const d=await api('/api/history/'+key+'?target_id='+c.target_id);if(!historyOpen||request!==historyRequest)return;
+    c.current_content=d.current_content;c.current_hash=d.current_hash;renderHistoryPreview();
+    const kinds={'save':'保存','restore':'恢复','before overwrite':'覆盖前保留'};
+    c.versions=d.versions.map(v=>({...v,displayDate:new Date(v.date).toLocaleString()}));
+    for(const v of c.versions){const option=document.createElement('option');option.value=v.revision;option.textContent=v.displayDate+' · '+(kinds[v.kind]||v.kind)+(v.note?' · '+v.note:'');list.appendChild(option)}
+    document.getElementById('history-error').textContent=d.versions.length?'':'暂无历史版本。首次保存修改时会记录当前内容与新内容。';if(d.versions.length)await selectHistory();
+  }catch(e){if(historyOpen&&request===historyRequest)document.getElementById('history-error').textContent=e.message}
+}
+async function checkStatus(){
+  if(document.hidden||busy()||!currentProfile||!profileAvailable)return;
+  const ticket=epoch,sequence=++statusSequence;
+  const bases=Object.fromEntries(KEYS.map(k=>[k,{file:files[k],hash:files[k].hash,version:files[k].version}]));
+  try{
+    const d=await api('/api/status');if(ticket!==epoch||sequence!==statusSequence||document.hidden||busy())return;
+    for(const key of KEYS){
+      if(ticket!==epoch||sequence!==statusSequence||busy())return;
+      const disk=d.files[key],f=files[key],base=bases[key];
+      if(f!==base.file||f.hash!==base.hash||f.version!==base.version||!f.readable||!disk)continue;
+      if((disk.hash&&f.hash&&disk.hash!==f.hash)||(disk.target_id&&disk.target_id!==f.target_id)){
+        if(f.dirty){f.conflict=true;setState(key,'Disk changed while local edits are unsaved','conflict')}
+        else{await loadOne(key,true);return}
+      }
+    }
+  }catch(_){if(ticket===epoch&&sequence===statusSequence&&!busy()&&!document.hidden)setOnline(false)}
+}
+
+document.querySelectorAll('[data-reload]').forEach(b=>b.addEventListener('click',()=>loadOne(b.dataset.reload)));
+document.querySelectorAll('[data-history]').forEach(b=>b.addEventListener('click',()=>openHistory(b.dataset.history)));
+document.getElementById('history-close').onclick=closeHistory;
+document.getElementById('history-dialog').oncancel=e=>{e.preventDefault();closeHistory()};
+document.getElementById('history-list').onchange=selectHistory;
+document.getElementById('history-full').onclick=()=>{historyDiff=false;renderHistoryPreview()};
+document.getElementById('history-changes').onclick=()=>{historyDiff=true;renderHistoryPreview()};
+document.getElementById('history-restore').onclick=()=>{const c=historyContext,revision=historyPreview?.revision,date=document.getElementById('history-timestamp').textContent;if(!c||!revision||files[c.key].dirty||c.epoch!==epoch||c.profile!==currentProfile||files[c.key].target_id!==c.target_id)return;closeHistory();restoreVersion(c.key,revision,date)};
+document.getElementById('profile').addEventListener('change',e=>switchProfile(e.target.value));
+document.getElementById('refresh-profiles').addEventListener('click',()=>refreshProfiles().catch(e=>setGlobal(e.message,'disconnected')));
+document.getElementById('save-all').addEventListener('click',saveAll);
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){e.preventDefault();saveAll()}});
+window.addEventListener('beforeunload',e=>{if(KEYS.some(k=>files[k].dirty)){e.preventDefault();e.returnValue=''}});
+window.addEventListener('focus',checkStatus);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkStatus()});
+setInterval(checkStatus,30000);
+loadAll();
+</script>
+</body>
+</html>

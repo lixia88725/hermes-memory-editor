@@ -1,0 +1,17 @@
+{
+  "vendor/dependency.json": "ded538cf9e90f2c7d86ef919dbc2850f6289d92fb9f18831b49042842e1f25ed",
+  "vendor/vditor/LICENSE": "c50d6e1944c4c1558ef12a5cfa4f0a4e8c927a56908c1a587c9d60400eef66fe",
+  "vendor/vditor/dist/css/content-theme/dark.css": "1f356c75aae6ed95103e80dbbd9c6b7a90fb888aaae71f6240d24ea957881c12",
+  "vendor/vditor/dist/css/content-theme/light.css": "53dce51fff68c775c14bb97f7575c425f4926b5e498beb2b2cd8e6b65db7fe4b",
+  "vendor/vditor/dist/index.css": "0865fe88664d5a9628e8f09d9214506c5109456c9af04b24965abe4f20ec073c",
+  "vendor/vditor/dist/index.min.js": "8c5679db69c84ca06a61310b9737cdab967325fb4879de698b09802e254ad064",
+  "vendor/vditor/dist/js/i18n/zh_CN.js": "6a0c07e6c40f934715b0bebcea20bdbbf20c34ba70ab9ea8d22336a1c47ab09c",
+  "vendor/vditor/dist/js/icons/ant.js": "a91e14e09dcd7b99f49b7b8dcc6301fed6774d62547fcf4e971757aa3a802c33",
+  "vendor/vditor/dist/js/lute/lute.min.js": "3c11d9ce4b58441dc945509d3764f57242ea877379b977a8a13c664aed2172a4",
+  "vendor/vditor/package.json": "48657c64eb1efc1183f1841345af5b9f7fa2567dc053d2c5b607686cc79dab1f",
+  "notices/DIFF-MATCH-PATCH-LICENSE": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+  "notices/HEROICONS-LICENSE": "60e0b68c0f35c078eef3a5d29419d0b03ff84ec1df9c3f9d6e39a519a5ae7985",
+  "notices/LUTE-LICENSE": "5a36a4ef787bb02ae700b92030d98411736c5ec3879b75b03fa839b415d1b7d0",
+  "notices/THIRD-PARTY-NOTICES.txt": "d37163ebc8ff646d13741c5d5902f1e5cc6787c24ca2001ee891f8ba5462e044",
+  "notices/provenance.json": "83522c077f96a75cafa80b14351ea790781f71c5698cbc08af2365473292bfb4"
+}

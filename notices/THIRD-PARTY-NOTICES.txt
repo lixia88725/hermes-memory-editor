@@ -1,0 +1,24 @@
+Third-party notices — Hermes Memory Editor
+
+Vditor 3.11.2
+Copyright (c) 2019-present B3log 开源, b3log.org
+MIT License: ../vendor/vditor/LICENSE
+Upstream: https://github.com/Vanessa219/vditor/tree/v3.11.2
+The runtime files are copied unmodified from the pinned npm package.
+
+Heroicons outline reload/history and source/rendered-editing SVGs
+Copyright (c) Tailwind Labs, Inc.
+MIT License: HEROICONS-LICENSE
+https://github.com/tailwindlabs/heroicons
+
+Diff Match and Patch 1.0.5 (bundled in Vditor)
+Copyright 2018 The diff-match-patch Authors.
+Apache License 2.0: DIFF-MATCH-PATCH-LICENSE
+https://github.com/google/diff-match-patch
+
+Lute 1.7.6 (bundled parser/runtime)
+Mulan Permissive Software License v2: LUTE-LICENSE
+https://github.com/88250/lute/tree/v1.7.6
+License blob: 18f1ffd2e3df515b87c2f63c0434e9cb1f454d3e
+
+See provenance.json for supplementary license retrieval sources.

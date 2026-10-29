@@ -1,0 +1,25 @@
+{
+  "diff-match-patch": {
+    "version": "1.0.5",
+    "archive_sha256": "ea56d44af647249ce8c1120464f48f66bbb206820e06903d915b3bfb29bc65ab",
+    "dist": {
+      "shasum": "abb584d5f10cd1196dfc55aa03701592ae3f7b37",
+      "tarball": "https://registry.npmjs.org/diff-match-patch/-/diff-match-patch-1.0.5.tgz",
+      "fileCount": 4,
+      "integrity": "sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==",
+      "signatures": [
+        {
+          "sig": "MEYCIQCjbEjNvAEuvJEOhYrw8+0FcGDCw+e9l0jefNx0Ko/zXwIhAKALCFuU1vn/e+9DAMyV+0wi8f5kLcxaJgx41Fv9iDky",
+          "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+        }
+      ],
+      "unpackedSize": 97445,
+      "npm-signature": "-----BEGIN PGP SIGNATURE-----\r\nVersion: OpenPGP.js v3.0.4\r\nComment: https://openpgpjs.org\r\n\r\nwsFcBAEBCAAQBQJexayRCRA9TVsSAnZWagAAwz8P/jXAZY/+esRHnfaTuzBr\nSQlgStqXNaH8ZFhTZpGbA/J2FhsIOuodcmEaOoCsekVwnCVW20dYGeQM76dp\nssWtsU1MRrN+wN/Ah+8CgzkjJ9jeMxfsfbQXc+45ad/GllCB3Ioy61M3FRDM\nxZcfdIcHq2KBPgGXfctvdALZpS+Gs5nhGjaq6yLAP08b7j4JHN0BGhnN2QYG\ncRXlQh31MlfrwcDkCfHoonBoNqpHp3nukb8u7RG0C0X/ls1k78yFG2HsUc25\n1CIeB5llKc6RLRUVpZyT2YwAldOB1qhJmbgX/5uNmsf4eXNmIlDQRPRVMR8o\nURx+ZjHG9dZ+HEY/z32ftKpY2jSy7+WhFwy6Pws46pJEf/AJMZoNBDOaoz6h\nAGDEuep6s7nAudtv/uF2BmRITt5iB9USOf45P9ocXt0UMqbSs9SGAfDcV8Ka\nXho17vyTFdSPDL+tYES7xZGezSuR5mKGlpgY//VayuEzGdx8Ef65XSGyNC8b\n3c2CtRzIuxgW7WJlUWYvYjMoWpoEFMPjH2zsC23atQOKrfcjRl2FaQHo1rkz\n+MEI8WSwvcSpB5K3Wny8bq6YcORC63vfxwYjvEwhFJGsn4RoHLPPkGj54UOX\ncDAOYrMhsIZ2V4lLhhu7s+bR2/UxS6raSuZL94uZSmzgjFuTqh1IEDMBfmJY\n6Bz/\r\n=QNly\r\n-----END PGP SIGNATURE-----\r\n"
+    }
+  },
+  "lute_license": {
+    "version": "1.7.6",
+    "blob_sha": "18f1ffd2e3df515b87c2f63c0434e9cb1f454d3e",
+    "url": "https://github.com/88250/lute/blob/v1.7.6/LICENSE"
+  }
+}
