@@ -20,7 +20,7 @@ body{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);col
 .badge{display:inline-flex;align-items:center;border-radius:999px;padding:1px 7px;background:#e8f2ff;color:#075fae;font-size:10px;font-weight:700}.badge.off{background:#f0f0f2;color:#6e6e73}.badge.warn{background:#fff1e7;color:#a33a00}
 .actions{display:flex;align-items:center;gap:8px;flex-shrink:0}#global-status{font-size:11px;color:var(--muted);min-width:92px;text-align:right}.connected{color:var(--green)!important}.disconnected{color:var(--red)!important}
 button{font:600 11px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer}button:hover:not(:disabled){background:#f0f0f5}button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:var(--blue);border-color:var(--blue);color:#fff;padding:6px 14px}button.danger{color:var(--red)}
-#config-warning{display:none;padding:5px 14px;background:#fff4e8;color:#8a3900;border-bottom:1px solid #ffd8b5;font-size:11px}
+#config-warning{display:none}
 #panels{display:flex;flex:1;min-height:0;padding:8px 4px 0;gap:0}.panel{flex:1;min-width:0;margin:0 4px;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--border);border-radius:9px;box-shadow:var(--shadow)}
 .panel-header{padding:7px 10px;border-bottom:1px solid var(--border);background:#fafafa;display:flex;flex-direction:column;gap:4px}.panel-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.panel-name{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:750;letter-spacing:.03em}.dot{width:8px;height:8px;border-radius:50%}.memory .dot{background:var(--blue)}.user .dot{background:#34c759}.soul .dot{background:#ff9500}.agents .dot{background:#af52de}.panel-actions{display:flex;gap:5px}.panel-actions button{padding:3px 7px;font-size:10px}
 .panel-info{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:10px;white-space:nowrap}.path{overflow:hidden;text-overflow:ellipsis}.path:empty{display:none}.stats{font-variant-numeric:tabular-nums;flex-shrink:0;margin-left:auto}.stats.warn{color:var(--orange)}.stats.danger{color:var(--red)}
@@ -43,7 +43,7 @@ select{min-height:32px;max-width:240px;padding:4px 28px 4px 10px;font:500 12px -
 .actions{gap:14px}#global-status{font-size:12px;min-width:0;max-width:240px;overflow-wrap:anywhere}
 button{min-height:32px;padding:6px 11px;border-radius:5px;font:500 12px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;transition:background .12s,border-color .12s}button:hover:not(:disabled){background:var(--hover);border-color:var(--muted)}button:disabled{opacity:.4;cursor:not-allowed}button.primary{min-height:36px;padding:8px 15px;background:var(--text);border-color:var(--text);color:var(--panel);font-weight:600}button.primary:hover:not(:disabled){background:var(--muted);border-color:var(--muted)}
 button:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:3px}#refresh-profiles{font-size:11px;min-height:32px;background:transparent;color:var(--muted)}
-#config-warning{padding:10px 24px;background:var(--warning-bg);border-bottom:1px solid var(--border);color:var(--orange);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.meta>span#config-warning{margin-left:2px;color:var(--orange);font-size:11px;line-height:1.6;overflow-wrap:anywhere;min-width:0;max-width:100%}
 #panels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:18px 20px 16px;overflow:hidden}
 .panel{margin:0;min-width:0;border-radius:7px;box-shadow:none;flex:initial}.panel:focus-within{border-color:var(--focus)}
 .panel-header{padding:15px 14px 12px;gap:9px;background:var(--header);min-height:128px}.panel-top{flex-wrap:wrap;gap:12px}.panel-name{gap:8px;font-size:12px;font-weight:650;letter-spacing:.045em;min-height:20px}.dot{display:none}.badge{padding:2px 6px;font-size:9px;letter-spacing:.02em;font-weight:500;background:var(--tint);color:var(--muted);border-radius:3px}.badge.off{background:var(--tint);color:var(--muted)}.badge.warn{background:var(--warning-bg);color:var(--orange)}
@@ -120,11 +120,11 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 <div id="toolbar">
   <div class="identity">
     <div class="title"><span>Hermes</span> Memory Editor</div>
-    <div class="meta"><span id="connection">● Connecting</span><span>Hermes</span><code id="home"></code><span>Workspace</span><code id="workspace"></code><span id="shared-workspace" role="status" hidden></span></div>
+    <div class="meta"><span id="connection">● Connecting</span><span>Hermes</span><code id="home"></code><span>Workspace</span><code id="workspace"></code><span id="shared-workspace" role="status" hidden></span><span id="config-warning" role="status"></span></div>
   </div>
   <div class="actions"><span id="global-status"></span><button id="save-all" class="primary">Save</button></div>
 </div>
-<div id="config-warning"></div>
+
 <!-- Hidden select is the existing validated switching controller, not a second UI. -->
 <select id="profile" hidden aria-hidden="true" tabindex="-1" disabled></select>
 <div id="agent-bar"><div id="agent-tabs" role="tablist" aria-label="Agent" aria-orientation="horizontal"></div><button id="refresh-profiles" class="icon-button" title="Refresh Agent list" aria-label="Refresh Agent list"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
@@ -304,7 +304,7 @@ async function loadProfile(){
     const [meta,documents]=await Promise.all([api('/api/meta'),Promise.all(KEYS.map(async key=>{
       try{return {data:await api('/api/read/'+key)}}catch(error){return {error}}
     }))]);if(ticket!==epoch)return;
-    document.getElementById('home').textContent=meta.home;document.getElementById('home').title=meta.home;document.getElementById('workspace').textContent=meta.workspace||'Not configured';const shared=document.getElementById('shared-workspace');shared.textContent=meta.shared_workspace?.length?'共享 Workspace · '+meta.shared_workspace.join(', '):'';shared.hidden=!shared.textContent;shared.title=shared.textContent?'AGENTS.md 与这些 Agent 共用同一个文件，修改会同时影响它们：'+meta.shared_workspace.join(', '):'';const w=document.getElementById('config-warning');w.textContent=meta.config_warning||'';w.style.display=w.textContent?'block':'none';
+    document.getElementById('home').textContent=meta.home;document.getElementById('home').title=meta.home;document.getElementById('workspace').textContent=meta.workspace||'Not configured';const shared=document.getElementById('shared-workspace');shared.textContent=meta.shared_workspace?.length?'共享 Workspace · '+meta.shared_workspace.join(', '):'';shared.hidden=!shared.textContent;shared.title=shared.textContent?'AGENTS.md 与这些 Agent 共用同一个文件，修改会同时影响它们：'+meta.shared_workspace.join(', '):'';const w=document.getElementById('config-warning');w.textContent=meta.config_warning||'';w.title=w.textContent;w.style.display=w.textContent?'inline':'none';
     for(const [i,k] of KEYS.entries()){
       const result=documents[i];
       if(result.error){files[k].readable=false;block(k,'Read failed',result.error.message);setState(k,result.error.message,'error');setOnline(false)}
