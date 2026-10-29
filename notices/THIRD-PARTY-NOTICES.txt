@@ -6,7 +6,8 @@ MIT License: ../vendor/vditor/LICENSE
 Upstream: https://github.com/Vanessa219/vditor/tree/v3.11.2
 The runtime files are copied unmodified from the pinned npm package.
 
-Heroicons outline reload/history and source/rendered-editing SVGs
+Heroicons outline reload/history, source/rendered-editing and document-header SVGs
+Document headers: archive-box, user, sparkles, clipboard-document-check (v2.2.0)
 Copyright (c) Tailwind Labs, Inc.
 MIT License: HEROICONS-LICENSE
 https://github.com/tailwindlabs/heroicons

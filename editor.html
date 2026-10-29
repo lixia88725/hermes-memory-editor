@@ -6,6 +6,29 @@
 <title>Hermes Memory Editor</title>
 <link rel="stylesheet" href="vendor/vditor/dist/index.css">
 <link rel="stylesheet" href="vditor-editor.css">
+<script>
+(() => {
+ const media=matchMedia('(prefers-color-scheme: dark)');
+ let preference='system';
+ try { preference=localStorage.getItem('hermes-editor-theme')||'system'; } catch {}
+ if(!['system','light','dark'].includes(preference))preference='system';
+ window.editorTheme={get preference(){return preference},set(value){
+  if(!['system','light','dark'].includes(value))return;
+  preference=value;try{localStorage.setItem('hermes-editor-theme',value)}catch{};apply();
+ }};
+ function apply(){
+  const resolved=preference==='system'?(media.matches?'dark':'light'):preference;
+  document.documentElement.dataset.theme=resolved;
+  document.documentElement.style.colorScheme=resolved;
+  document.querySelectorAll('[data-theme-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeChoice===preference)));
+  window.dispatchEvent(new CustomEvent('editor-theme-change',{detail:resolved}));
+ }
+ media.addEventListener('change',apply);document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('[data-theme-choice]').forEach(b=>b.addEventListener('click',()=>window.editorTheme.set(b.dataset.themeChoice)));
+  apply();
+ });apply();
+})();
+</script>
 <style>
 /* Original style retained below; the bounded visual layer follows it. */
 :root {
@@ -38,6 +61,7 @@ body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif}
 .identity{flex:1;min-width:0}.title{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:18px;font-weight:600;letter-spacing:-.025em}.title span{color:var(--muted);font-weight:400}
 select{min-height:32px;max-width:240px;padding:4px 28px 4px 10px;font:500 12px -apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);background:var(--header);border-radius:5px}
 .meta{gap:8px;flex-wrap:wrap;margin-top:10px;font-size:11px;line-height:1.6}.meta code{font:10px/1.6 "SF Mono",Monaco,monospace;max-width:220px;color:var(--muted)}.meta>span:not(#connection){margin-left:8px;color:var(--muted)}
+.meta>code,.meta>span:not([id]){opacity:.5}
 #shared-workspace{font-size:11px;color:var(--orange);opacity:.85;overflow-wrap:anywhere}.meta>span#shared-workspace{margin-left:2px;color:var(--orange)}
 #connection{font-size:11px}.connected{color:var(--green)!important}.disconnected{color:var(--red)!important}
 .actions{gap:14px}#global-status{font-size:12px;min-width:0;max-width:240px;overflow-wrap:anywhere}
@@ -54,7 +78,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline
 .blocker{padding:24px 18px;background:var(--block-bg);font-size:12px;line-height:1.7;overflow:auto}.detail{font-size:11px}
 #hint{padding:9px 20px;text-align:left;line-height:1.6;font-size:10px;background:var(--bg);flex-shrink:0}kbd{background:var(--panel);padding:2px 5px;font:10px -apple-system,BlinkMacSystemFont,sans-serif;margin-right:3px}
 dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;background:var(--panel);color:var(--text);border-radius:8px}dialog strong{font-size:18px;font-weight:600;letter-spacing:-.02em}dialog p{color:var(--muted);font-size:13px;margin:12px 0 24px}dialog .choices{flex-wrap:wrap;gap:8px;margin-top:0}dialog::backdrop{background:rgba(20,20,18,.4)}
-@media(prefers-color-scheme:dark){:root{--bg:#1c1c1b;--panel:#242423;--header:#282827;--border:#3d3d39;--text:#e8e7e1;--muted:#aaa99f;--blue:#a4b9cb;--green:#a0b6a2;--orange:#dbb778;--red:#efa59d;--hover:#363633;--tint:#353531;--warning-bg:#342e23;--block-bg:rgba(36,36,35,.97);--focus:#9cb6ce;--editor-ink:#e8e7e1}.editor-body{--bg-primary:var(--panel);--text-primary:var(--text)}}
+:root[data-theme="dark"]{--bg:#1c1c1b;--panel:#242423;--header:#282827;--border:#3d3d39;--text:#e8e7e1;--muted:#aaa99f;--blue:#a4b9cb;--green:#a0b6a2;--orange:#dbb778;--red:#efa59d;--hover:#363633;--tint:#353531;--warning-bg:#342e23;--block-bg:rgba(36,36,35,.97);--focus:#9cb6ce;--editor-ink:#e8e7e1}:root[data-theme="dark"] .editor-body{--bg-primary:var(--panel);--text-primary:var(--text)}
 @media(min-width:1000px) and (max-width:1250px){#panels{overflow:hidden}.panel{flex:initial}.meta code{max-width:150px}#toolbar{padding:16px 20px}}
 @media(max-width:999px){body{overflow:hidden}#toolbar{padding:16px;gap:12px;min-height:0}.title{font-size:17px}.meta code{max-width:180px}#panels{grid-template-columns:repeat(2,minmax(0,1fr));overflow:auto;gap:12px;padding:14px;align-content:start}.panel{min-height:420px;height:54vh;margin:0}.actions{margin-left:auto}.panel-header{min-height:128px}#hint{padding:8px 16px}}
 @media(max-width:600px){.title{gap:6px}.meta{gap:5px;font-size:10px}.meta code{max-width:calc(100vw - 100px)}.meta>span:not(#connection){margin-left:0}.actions{width:100%;justify-content:space-between;flex-direction:row-reverse}.actions .primary{flex-shrink:0}#global-status{text-align:left;max-width:45%}#panels{grid-template-columns:minmax(0,1fr);padding:12px;gap:12px}.panel{height:440px;min-height:440px}.panel-header{min-height:122px}.panel-actions button{min-height:32px;padding:6px 10px}#hint{font-size:10px}}
@@ -62,10 +86,14 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 .panel-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:8px 10px;gap:5px 8px;min-height:0}
 .panel-top{grid-column:1 / -1;gap:6px 10px;align-items:center}
 .panel-name{min-height:20px;font-size:11px;letter-spacing:.025em;gap:5px}
+.document-icon{width:16px;height:16px;flex-shrink:0;color:var(--text)}
 .panel-actions{width:auto;margin-left:auto;gap:5px;flex-shrink:0}
 .panel-actions button{min-height:26px;padding:3px 7px;font-size:10px}
 .panel-info{min-width:0;gap:3px;line-height:1.4}
 .stats{font-size:9px;line-height:1.5}
+.panel-header .stats:not(.warn):not(.danger),.panel-header .path{opacity:.62}
+.panel-header .badge:not(.warn){opacity:.62}
+.panel-header .file-state:not(.unsaved):not(.saving):not(.error):not(.conflict){opacity:.62}
 .file-state{min-height:0;max-width:120px;font-size:10px;line-height:1.4;text-align:right}
 @media(max-width:600px){.panel-header{min-height:0;padding:8px 10px}.panel-actions button{min-height:30px;padding:4px 8px}.panel-name{font-size:11px}}
 @media(prefers-reduced-motion:reduce){button{transition:none}}
@@ -89,10 +117,16 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 .history-line.historical-only{background:#fbeeed;color:#7c332f;border-left:3px solid #ba807a;padding-left:9px}
 .history-empty{padding:12px;color:var(--muted);font:12px/1.7 -apple-system,BlinkMacSystemFont,sans-serif}
 #history-error{color:var(--red);font-size:12px;overflow-wrap:anywhere}#history-draft{color:var(--orange)}#history-dialog .choices{justify-content:flex-end}
-@media(prefers-color-scheme:dark){.history-line.current-only{background:#263b2d;color:#c5dfcc;border-color:#7da787}.history-line.historical-only{background:#442d2b;color:#f0c6c1;border-color:#ba807a}}
+:root[data-theme="dark"] .history-line.current-only{background:#263b2d;color:#c5dfcc;border-color:#7da787}:root[data-theme="dark"] .history-line.historical-only{background:#442d2b;color:#f0c6c1;border-color:#ba807a}
 @media(max-width:600px){#history-dialog{padding:14px;max-height:94vh}#history-preview{grid-template-columns:minmax(0,1fr);gap:12px}.history-content{height:25vh;min-height:130px}.history-tools{gap:8px}.history-top strong{font-size:16px}}
+#theme-control{display:inline-flex;flex-shrink:0;gap:2px;padding:3px;border:1px solid var(--border);border-radius:7px;background:var(--header)}
+#theme-control button{min-height:26px;padding:3px 8px;border:1px solid transparent;background:transparent;color:var(--muted);font-size:11px}
+#theme-control button[aria-pressed="true"]{background:var(--panel);border-color:var(--border);color:var(--text)}
+@media(max-width:600px){.actions{flex-direction:row;flex-wrap:wrap;gap:8px}#global-status{margin-right:auto}}
 /* Heroicons outline icons (MIT), matching the native lightweight controls. */
 .panel-actions .icon-button{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:5px;min-height:30px;background:transparent;border-color:transparent;color:var(--muted)}
+.panel-actions .icon-button:not(:disabled){opacity:.55}
+.panel-actions .icon-button:is(:hover,:focus-visible):not(:disabled){opacity:1;color:var(--text)}
 .panel-actions .icon-button:hover:not(:disabled){background:var(--hover);border-color:var(--border);color:var(--text)}
 .icon-button svg{width:17px;height:17px;flex:none}
 #refresh-profiles{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:6px;border-color:transparent;flex-shrink:0}
@@ -119,10 +153,10 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 <body>
 <div id="toolbar">
   <div class="identity">
-    <div class="title"><span>Hermes</span> Memory Editor</div>
+    <div class="title"><span class="brand-emoji" aria-hidden="true">🧠</span><span>Hermes</span> Memory Editor</div>
     <div class="meta"><span id="connection">● Connecting</span><span>Hermes</span><code id="home"></code><span>Workspace</span><code id="workspace"></code><span id="shared-workspace" role="status" hidden></span><span id="config-warning" role="status"></span></div>
   </div>
-  <div class="actions"><span id="global-status"></span><button id="save-all" class="primary">Save</button></div>
+  <div class="actions"><span id="global-status"></span><div id="theme-control" role="group" aria-label="Appearance"><button type="button" data-theme-choice="system" aria-pressed="true" title="跟随系统">System</button><button type="button" data-theme-choice="light" aria-pressed="false" title="亮色主题">Light</button><button type="button" data-theme-choice="dark" aria-pressed="false" title="暗色主题">Dark</button></div><button id="save-all" class="primary">Save</button></div>
 </div>
 
 <!-- Hidden select is the existing validated switching controller, not a second UI. -->
@@ -134,7 +168,9 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 <div id="panels" role="tabpanel" aria-label="Agent documents" tabindex="0">
   <section class="panel memory" id="panel-memory">
     <header class="panel-header">
-      <div class="panel-top"><div class="panel-name"><span class="dot"></span>MEMORY.md <span class="badge" id="enabled-memory"></span></div><div class="panel-actions"><button class="icon-button" data-reload="memory" title="Reload" aria-label="Reload MEMORY.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <div class="panel-top"><div class="panel-name" title="长期记忆"><svg class="document-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>
+</svg>MEMORY.md <span class="badge" id="enabled-memory"></span></div><div class="panel-actions"><button class="icon-button" data-reload="memory" title="Reload" aria-label="Reload MEMORY.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
   <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
 </svg>
 </button><button class="icon-button" data-history="memory" title="History" aria-label="History MEMORY.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
@@ -146,7 +182,9 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
   </section>
   <section class="panel user" id="panel-user">
     <header class="panel-header">
-      <div class="panel-top"><div class="panel-name"><span class="dot"></span>USER.md <span class="badge" id="enabled-user"></span></div><div class="panel-actions"><button class="icon-button" data-reload="user" title="Reload" aria-label="Reload USER.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <div class="panel-top"><div class="panel-name" title="用户信息与偏好"><svg class="document-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
+</svg>USER.md <span class="badge" id="enabled-user"></span></div><div class="panel-actions"><button class="icon-button" data-reload="user" title="Reload" aria-label="Reload USER.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
   <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
 </svg>
 </button><button class="icon-button" data-history="user" title="History" aria-label="History USER.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
@@ -158,7 +196,9 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
   </section>
   <section class="panel soul" id="panel-soul">
     <header class="panel-header">
-      <div class="panel-top"><div class="panel-name"><span class="dot"></span>SOUL.md</div><div class="panel-actions"><button class="icon-button" data-reload="soul" title="Reload" aria-label="Reload SOUL.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <div class="panel-top"><div class="panel-name" title="个性、表达与行为风格"><svg class="document-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"/>
+</svg>SOUL.md</div><div class="panel-actions"><button class="icon-button" data-reload="soul" title="Reload" aria-label="Reload SOUL.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
   <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
 </svg>
 </button><button class="icon-button" data-history="soul" title="History" aria-label="History SOUL.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
@@ -170,7 +210,9 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
   </section>
   <section class="panel agents" id="panel-agents">
     <header class="panel-header">
-      <div class="panel-top"><div class="panel-name"><span class="dot"></span>AGENTS.md</div><div class="panel-actions"><button class="icon-button" data-reload="agents" title="Reload" aria-label="Reload AGENTS.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+      <div class="panel-top"><div class="panel-name" title="工作区规则与协作约定"><svg class="document-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75"/>
+</svg>AGENTS.md</div><div class="panel-actions"><button class="icon-button" data-reload="agents" title="Reload" aria-label="Reload AGENTS.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
   <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
 </svg>
 </button><button class="icon-button" data-history="agents" title="History" aria-label="History AGENTS.md"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">

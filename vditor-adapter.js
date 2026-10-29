@@ -47,13 +47,13 @@ async function createDocumentEditor(key,onChange,onComposition){
     engine=new Vditor(rich.id,{
       cdn:new URL('vendor/vditor',location.href).href.replace(/\/$/,''),lang:'zh_CN',mode:'ir',value:'',
       cache:{enable:false},toolbar:[],toolbarConfig:{hide:true,pin:false},height:'100%',minHeight:100,
-      theme:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'classic',undoDelay:150,
+      theme:document.documentElement.dataset.theme==='dark'?'dark':'classic',undoDelay:150,
       outline:{enable:false},counter:{enable:false},resize:{enable:false},hint:{emoji:{},extend:[],parse:false},
       link:{isOpen:false},image:{isPreview:false},upload:{url:'',linkToImgUrl:'',handler:()=>null},
       preview:{actions:[],hljs:{enable:false},markdown:{autoSpace:false,fixTermTypo:false,paragraphBeginningSpace:false,gfmAutoLink:false,codeBlockPreview:false,mathBlockPreview:false,footnotes:false,toc:false,mark:false,sanitize:true,listStyle:false},render:{media:{enable:false}}},
       input:flush,after:()=>{ready=true;suppressed=false;canonical=engine.getValue();const editable=rich.querySelector('.vditor-ir [contenteditable]');editable.setAttribute('role','textbox');editable.setAttribute('aria-multiline','true');editable.setAttribute('aria-label',key.toUpperCase()+'.md IR editor');setDisabled(true);resolve();}
     });
   });
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>engine.setTheme(e.matches?'dark':'classic'));
+  window.addEventListener('editor-theme-change',e=>engine.setTheme(e.detail==='dark'?'dark':'classic'));
   return {getValue:flush,setValue:load,setDisabled,isComposing:()=>composing||settling,focus:()=>sourceMode?source.focus():engine.focus()};
 }
