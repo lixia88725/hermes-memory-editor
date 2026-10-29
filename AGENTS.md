@@ -1,6 +1,6 @@
 # Hermes Memory Editor
 
-Local, profile-aware Markdown context editor with capacity checks and recoverable writes. Read [README.md](README.md) for operation, interfaces, dependencies and verification; this is not a general file manager or a runtime configuration editor.
+Local, profile-aware Markdown context editor with capacity checks and recoverable writes. Read [README.md](README.md) for an overview and [GUIDE.md](GUIDE.md) for operation, interfaces, dependencies and verification; this is not a general file manager or a runtime configuration editor.
 
 ## Modules and ownership
 

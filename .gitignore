@@ -3,6 +3,7 @@
 !/.gitignore
 !/AGENTS.md
 !/README.md
+!/GUIDE.md
 !/server.py
 !/local_history.py
 !/launcher.py
