@@ -30,6 +30,7 @@ Each Agent has four side-by-side editing panels:
 - **Check capacity.** See MEMORY and USER character budgets before saving.
 - **Recover earlier versions.** Changed saves create local Git history. Compare versions and explicitly confirm a restore.
 - **Avoid accidental overwrites.** Get a reminder before switching with unsaved edits, and a conflict warning if another program has changed the file.
+- **Manage nightly Dream jobs.** Choose an Agent, toggle its review, edit its nightly time, and select prompt actions; settings save automatically. Opening is read-only. Changing actions regenerates the prompt; time/toggle-only changes preserve it. Lightning controls run one or all enabled jobs after confirmation. This uses official Hermes cron helpers, not an embedded official dashboard. See [Dream setup and limits](GUIDE.md#dream--nightly-memory-review).
 - **Keep documents local.** Editor assets ship with the repository. Document versions stay on your machine and are not automatically uploaded to GitHub.
 
 ## Getting started
@@ -70,6 +71,7 @@ After preparing the test dependencies described in the guide, including Playwrig
 ```bash
 python3 test_history.py
 python3 test_loading.py
+python3 test_dream.py
 ```
 
 Tests use isolated sample files. Do not use real Agent documents for save or restore tests.

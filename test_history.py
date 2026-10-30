@@ -841,7 +841,7 @@ class AgentTabTests(unittest.TestCase):
                         self.assertTrue(page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
                         self.assertTrue(page.locator('#agent-tabs').evaluate('(e)=>e.scrollWidth>e.clientWidth'))
                         self.assertTrue(page.locator('#refresh-profiles').evaluate('(e)=>{const r=e.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth}'))
-                        self.assertTrue(page.evaluate('document.querySelector("#agent-bar").getBoundingClientRect().bottom===document.querySelector("#panels").getBoundingClientRect().top'))
+                        self.assertTrue(page.evaluate('document.querySelector("#agent-bar").getBoundingClientRect().bottom===document.querySelector(".meta").getBoundingClientRect().top && document.querySelector(".meta").getBoundingClientRect().bottom===document.querySelector("#panels").getBoundingClientRect().top'))
                         if width in (1440,390):page.screenshot(path=str(artifacts/('tabs-%s-%s.png'%(scheme,width))))
                 # Touch/mobile context: real tap, scrolling within tab strip, last document reachable.
                 context=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True,device_scale_factor=2)

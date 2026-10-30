@@ -28,11 +28,16 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 from local_history import LocalHistory
+from dream import Dream
+
+# Explicit allowlist, no runtime registry/prompt storage is ever served.
+DREAM_ASSETS = {'dream.js': 'text/javascript; charset=utf-8', 'dream.css': 'text/css; charset=utf-8'}
 
 APP_ID = "hermes-memory-editor"
 EDITOR_DIR = Path(__file__).resolve().parent
 HTML_PATH = EDITOR_DIR / "editor.html"
 STATIC_FILES = {'vditor-adapter.js': 'text/javascript; charset=utf-8', 'vditor-editor.css': 'text/css; charset=utf-8', 'vendor/vditor/dist/css/content-theme/dark.css': 'text/css; charset=utf-8', 'vendor/vditor/dist/css/content-theme/light.css': 'text/css; charset=utf-8', 'vendor/vditor/dist/index.css': 'text/css; charset=utf-8', 'vendor/vditor/dist/index.min.js': 'text/javascript; charset=utf-8', 'vendor/vditor/dist/js/i18n/zh_CN.js': 'text/javascript; charset=utf-8', 'vendor/vditor/dist/js/icons/ant.js': 'text/javascript; charset=utf-8', 'vendor/vditor/dist/js/lute/lute.min.js': 'text/javascript; charset=utf-8'}
+STATIC_FILES.update(DREAM_ASSETS)
 ENTRY_DELIMITER = "\n§\n"
 DEFAULT_LIMITS = {"memory": 2200, "user": 1375}
 MAX_BODY_BYTES = 1_000_000
@@ -108,33 +113,40 @@ def _parse_memory_config(raw: bytes) -> Dict[str, Any]:
         parsed = subprocess.run([str(interpreter), "-c", command], input=raw,
                                 capture_output=True, timeout=15, check=True)
         config = json.loads(parsed.stdout)
-        if config is None:
-            config = {}
-        if not isinstance(config, dict):
-            raise ValueError("config root must be a mapping")
-        for section in ("memory", "terminal"):
-            if section in config and not isinstance(config[section], dict):
-                raise ValueError(f"{section} must be a mapping")
-        memory = config.get("memory", {})
-        for name in ("memory_enabled", "user_profile_enabled"):
-            if name in memory:
-                if type(memory[name]) is not bool:
-                    raise ValueError(f"memory.{name} must be a boolean")
-                result[name] = memory[name]
-        for name in ("memory_char_limit", "user_char_limit"):
-            if name in memory:
-                if type(memory[name]) is not int or memory[name] < 0:
-                    raise ValueError(f"memory.{name} must be a non-negative integer")
-                result[name] = memory[name]
-        cwd = config.get("terminal", {}).get("cwd")
-        if cwd is not None and (not isinstance(cwd, str) or not cwd.strip()):
-            raise ValueError("terminal.cwd must be a nonempty string or null")
-        result["terminal_cwd"] = cwd
+        return _memory_config_from_mapping(config)
     except (OSError, UnicodeError, ValueError, subprocess.SubprocessError) as exc:
         # Do not include subprocess stderr: it may echo unrelated config secrets.
         result["config_error"] = f"Configuration unavailable: {type(exc).__name__}"
         result["config_warning"] = result["config_error"]
         result["terminal_cwd"] = None
+    return result
+
+
+def _memory_config_from_mapping(config):
+    """Pure validation shared with the sandboxed, Hermes-venv trigger adapter."""
+    result = _default_memory_config()
+    if config is None:
+        config = {}
+    if not isinstance(config, dict):
+        raise ValueError("config root must be a mapping")
+    for section in ("memory", "terminal"):
+        if section in config and not isinstance(config[section], dict):
+            raise ValueError(f"{section} must be a mapping")
+    memory = config.get("memory", {})
+    for name in ("memory_enabled", "user_profile_enabled"):
+        if name in memory:
+            if type(memory[name]) is not bool:
+                raise ValueError(f"memory.{name} must be a boolean")
+            result[name] = memory[name]
+    for name in ("memory_char_limit", "user_char_limit"):
+        if name in memory:
+            if type(memory[name]) is not int or memory[name] < 0:
+                raise ValueError(f"memory.{name} must be a non-negative integer")
+            result[name] = memory[name]
+    cwd = config.get("terminal", {}).get("cwd")
+    if cwd is not None and (not isinstance(cwd, str) or not cwd.strip()):
+        raise ValueError("terminal.cwd must be a nonempty string or null")
+    result["terminal_cwd"] = cwd
     return result
 
 
@@ -710,6 +722,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception as exc:
                 self._error(503, f"Profile discovery failed: {exc}")
             return
+        if path == '/api/dream':
+            try:
+                self._json(200, Dream(sys.modules[__name__]).snapshot())
+            except Exception as exc:
+                self._error(503, str(exc))
+            return
         target = self.state
         if path.startswith("/api/"):
             name = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("profile", [None])[0]
@@ -786,6 +804,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         data = self._read_json()
         if data is None:
+            return
+        if path.startswith('/api/dream/'):
+            try:
+                self._json(200, Dream(sys.modules[__name__]).request(path.rsplit('/', 1)[-1], data))
+            except (ValueError, OSError, subprocess.SubprocessError) as exc:
+                self._error(409 if 'changed' in str(exc) else 400, str(exc))
             return
         try:
             target = self.target_state(data.get("profile"))

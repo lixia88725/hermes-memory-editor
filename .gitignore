@@ -18,6 +18,14 @@
 !/vditor-editor.css
 !/test_history.py
 !/test_loading.py
+!/test_main_layout.py
+!/dream.py
+!/dream_worker.py
+!/dream_trigger.py
+!/test_dream_trigger.py
+!/dream.js
+!/dream.css
+!/test_dream.py
 
 # Open directory traversal only; never allow arbitrary descendants.
 !/vendor/

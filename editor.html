@@ -57,18 +57,23 @@ select{font:600 12px -apple-system;padding:3px 8px;border:1px solid var(--border
 /* Quiet document workspace: native type, neutral surfaces, semantic color only. */
 :root{color-scheme:light dark;--bg:#f5f4f1;--panel:#fff;--header:#fbfaf8;--border:#e3e1dc;--text:#292824;--muted:#706e68;--blue:#465e74;--green:#46634c;--orange:#936020;--red:#a33f38;--hover:#eeede9;--tint:#f0efeb;--warning-bg:#faf1df;--block-bg:rgba(255,255,255,.97);--shadow:none;--focus:#526d87}
 body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif}
-#toolbar{min-height:90px;padding:16px 24px 12px;gap:20px;background:var(--panel);border-bottom:0;backdrop-filter:none;align-items:center;flex-wrap:wrap}
+#toolbar{min-height:0;padding:10px 24px 8px;gap:20px;background:var(--panel);border-bottom:0;backdrop-filter:none;align-items:center;flex-wrap:wrap}
 .identity{flex:1;min-width:0}.title{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:18px;font-weight:600;letter-spacing:-.025em}.title span{color:var(--muted);font-weight:400}
 select{min-height:32px;max-width:240px;padding:4px 28px 4px 10px;font:500 12px -apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);background:var(--header);border-radius:5px}
-.meta{gap:8px;flex-wrap:wrap;margin-top:10px;font-size:11px;line-height:1.6}.meta code{font:10px/1.6 "SF Mono",Monaco,monospace;max-width:220px;color:var(--muted)}.meta>span:not(#connection){margin-left:8px;color:var(--muted)}
-.meta>code,.meta>span:not([id]){opacity:.5}
+.meta{gap:4px 14px;flex-wrap:wrap;margin:0;padding:6px 20px 0;font-size:11px;line-height:1.6;flex-shrink:0}
+.meta-path{display:flex;align-items:center;gap:8px;min-width:0;max-width:100%;opacity:.5}
+.meta code{font:10px/1.6 "SF Mono",Monaco,monospace;max-width:220px;color:var(--muted);min-width:0}
+.meta-path>span{flex-shrink:0}
 #shared-workspace{font-size:11px;color:var(--orange);opacity:.85;overflow-wrap:anywhere}.meta>span#shared-workspace{margin-left:2px;color:var(--orange)}
-#connection{font-size:11px}.connected{color:var(--green)!important}.disconnected{color:var(--red)!important}
+#connection{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:50%;background:var(--muted)}
+#connection.connected{background:var(--green)}#connection.disconnected{background:var(--red)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.connected{color:var(--green)!important}.disconnected{color:var(--red)!important}
 .actions{gap:14px}#global-status{font-size:12px;min-width:0;max-width:240px;overflow-wrap:anywhere}
 button{min-height:32px;padding:6px 11px;border-radius:5px;font:500 12px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;transition:background .12s,border-color .12s}button:hover:not(:disabled){background:var(--hover);border-color:var(--muted)}button:disabled{opacity:.4;cursor:not-allowed}button.primary{min-height:36px;padding:8px 15px;background:var(--text);border-color:var(--text);color:var(--panel);font-weight:600}button.primary:hover:not(:disabled){background:var(--muted);border-color:var(--muted)}
 button:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:3px}#refresh-profiles{font-size:11px;min-height:32px;background:transparent;color:var(--muted)}
 .meta>span#config-warning{margin-left:2px;color:var(--orange);font-size:11px;line-height:1.6;overflow-wrap:anywhere;min-width:0;max-width:100%}
-#panels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:18px 20px 16px;overflow:hidden}
+#panels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:8px 20px 16px;overflow:hidden}
 .panel{margin:0;min-width:0;border-radius:7px;box-shadow:none;flex:initial}.panel:focus-within{border-color:var(--focus)}
 .panel-header{padding:15px 14px 12px;gap:9px;background:var(--header);min-height:128px}.panel-top{flex-wrap:wrap;gap:12px}.panel-name{gap:8px;font-size:12px;font-weight:650;letter-spacing:.045em;min-height:20px}.dot{display:none}.badge{padding:2px 6px;font-size:9px;letter-spacing:.02em;font-weight:500;background:var(--tint);color:var(--muted);border-radius:3px}.badge.off{background:var(--tint);color:var(--muted)}.badge.warn{background:var(--warning-bg);color:var(--orange)}
 .panel-actions{width:100%;gap:6px}.panel-actions button{font-size:11px;min-height:28px;padding:4px 8px;background:var(--panel)}.panel-actions button[data-restore]{color:var(--muted)}
@@ -79,9 +84,9 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline
 #hint{padding:9px 20px;text-align:left;line-height:1.6;font-size:10px;background:var(--bg);flex-shrink:0}kbd{background:var(--panel);padding:2px 5px;font:10px -apple-system,BlinkMacSystemFont,sans-serif;margin-right:3px}
 dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;background:var(--panel);color:var(--text);border-radius:8px}dialog strong{font-size:18px;font-weight:600;letter-spacing:-.02em}dialog p{color:var(--muted);font-size:13px;margin:12px 0 24px}dialog .choices{flex-wrap:wrap;gap:8px;margin-top:0}dialog::backdrop{background:rgba(20,20,18,.4)}
 :root[data-theme="dark"]{--bg:#1c1c1b;--panel:#242423;--header:#282827;--border:#3d3d39;--text:#e8e7e1;--muted:#aaa99f;--blue:#a4b9cb;--green:#a0b6a2;--orange:#dbb778;--red:#efa59d;--hover:#363633;--tint:#353531;--warning-bg:#342e23;--block-bg:rgba(36,36,35,.97);--focus:#9cb6ce;--editor-ink:#e8e7e1}:root[data-theme="dark"] .editor-body{--bg-primary:var(--panel);--text-primary:var(--text)}
-@media(min-width:1000px) and (max-width:1250px){#panels{overflow:hidden}.panel{flex:initial}.meta code{max-width:150px}#toolbar{padding:16px 20px}}
-@media(max-width:999px){body{overflow:hidden}#toolbar{padding:16px;gap:12px;min-height:0}.title{font-size:17px}.meta code{max-width:180px}#panels{grid-template-columns:repeat(2,minmax(0,1fr));overflow:auto;gap:12px;padding:14px;align-content:start}.panel{min-height:420px;height:54vh;margin:0}.actions{margin-left:auto}.panel-header{min-height:128px}#hint{padding:8px 16px}}
-@media(max-width:600px){.title{gap:6px}.meta{gap:5px;font-size:10px}.meta code{max-width:calc(100vw - 100px)}.meta>span:not(#connection){margin-left:0}.actions{width:100%;justify-content:space-between;flex-direction:row-reverse}.actions .primary{flex-shrink:0}#global-status{text-align:left;max-width:45%}#panels{grid-template-columns:minmax(0,1fr);padding:12px;gap:12px}.panel{height:440px;min-height:440px}.panel-header{min-height:122px}.panel-actions button{min-height:32px;padding:6px 10px}#hint{font-size:10px}}
+@media(min-width:1000px) and (max-width:1250px){#panels{overflow:hidden}.panel{flex:initial}.meta code{max-width:150px}#toolbar{padding:10px 20px 8px}}
+@media(max-width:999px){body{overflow:hidden}#toolbar{padding:10px 16px 8px;gap:8px;min-height:0}.title{font-size:17px}.meta{padding:6px 14px 0}.meta code{max-width:180px}#panels{grid-template-columns:repeat(2,minmax(0,1fr));overflow:auto;gap:12px;padding:8px 14px 14px;align-content:start}.panel{min-height:420px;height:54vh;margin:0}.actions{margin-left:auto}.panel-header{min-height:128px}#hint{padding:8px 16px}}
+@media(max-width:600px){.title{gap:6px}.meta{gap:3px 10px;font-size:10px;padding:6px 12px 0}.meta code{max-width:calc(100vw - 100px)}.actions{width:100%;justify-content:space-between;flex-direction:row-reverse}.actions .primary{flex-shrink:0}#global-status{text-align:left;max-width:45%}#panels{grid-template-columns:minmax(0,1fr);padding:8px 12px 12px;gap:12px}.panel{height:440px;min-height:440px}.panel-header{min-height:122px}.panel-actions button{min-height:32px;padding:6px 10px}#hint{font-size:10px}}
 /* Compact panel chrome: keep space for the document, not fixed-height headers. */
 .panel-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:8px 10px;gap:5px 8px;min-height:0}
 .panel-top{grid-column:1 / -1;gap:6px 10px;align-items:center}
@@ -119,6 +124,9 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 #history-error{color:var(--red);font-size:12px;overflow-wrap:anywhere}#history-draft{color:var(--orange)}#history-dialog .choices{justify-content:flex-end}
 :root[data-theme="dark"] .history-line.current-only{background:#263b2d;color:#c5dfcc;border-color:#7da787}:root[data-theme="dark"] .history-line.historical-only{background:#442d2b;color:#f0c6c1;border-color:#ba807a}
 @media(max-width:600px){#history-dialog{padding:14px;max-height:94vh}#history-preview{grid-template-columns:minmax(0,1fr);gap:12px}.history-content{height:25vh;min-height:130px}.history-tools{gap:8px}.history-top strong{font-size:16px}}
+#dream-open{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-height:30px;padding:6px;border:0;background:transparent;color:var(--muted);opacity:.65;flex-shrink:0}
+#dream-open svg{width:18px;height:18px}
+#dream-open:is(:hover,:focus-visible){opacity:1;color:var(--text);background:var(--hover)}
 #theme-control{display:inline-flex;flex-shrink:0;gap:2px;padding:3px;border:1px solid var(--border);border-radius:7px;background:var(--header)}
 #theme-control button{min-height:26px;padding:3px 8px;border:1px solid transparent;background:transparent;color:var(--muted);font-size:11px}
 #theme-control button[aria-pressed="true"]{background:var(--panel);border-color:var(--border);color:var(--text)}
@@ -134,7 +142,7 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 /* Folder tabs sit on the workspace seam, not in the title toolbar. */
 #agent-bar{display:flex;align-items:stretch;gap:8px;padding:0 20px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;min-width:0}
 #agent-tabs{display:flex;align-items:flex-end;gap:12px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;flex:0 1 auto;margin-bottom:-1px;padding:4px 10px 0}
-.agent-tab{position:relative;flex:none;white-space:nowrap;min-height:36px;padding:7px 15px;border:1px solid transparent;border-bottom-color:var(--border);border-radius:11px 11px 0 0;background:transparent;color:var(--muted);font-size:12px}
+.agent-tab{position:relative;flex:none;white-space:nowrap;min-height:36px;padding:7px 34px 7px 19px;border:1px solid transparent;border-bottom-color:var(--border);border-radius:11px 11px 0 0;background:transparent;color:var(--muted);font-size:12px}
 .agent-tab:hover:not([aria-disabled="true"]){background:var(--header);border-color:var(--border)}
 .agent-tab[aria-selected="true"],.agent-tab[aria-selected="true"]:hover{background:var(--bg);border-color:var(--border);border-bottom-color:var(--bg);color:var(--text);font-weight:600}
 .agent-tab[aria-selected="true"]::before,.agent-tab[aria-selected="true"]::after{content:"";position:absolute;bottom:-1px;width:10px;height:10px;pointer-events:none;background:transparent;z-index:1}
@@ -145,7 +153,7 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 #agent-bar #refresh-profiles{align-self:center;margin:2px 0}
 #panels:focus-visible{outline:2px solid var(--focus);outline-offset:-3px}
 @media(max-width:999px){#agent-bar{padding:0 14px}}
-@media(max-width:600px){#agent-bar{padding:0 12px}.agent-tab{padding:7px 12px}}
+@media(max-width:600px){#agent-bar{padding:0 12px}.agent-tab{padding:7px 31px 7px 16px}#connection{right:15px}}
 #save-all{min-width:86px}
 #save-all[aria-busy="true"]{opacity:.8;cursor:progress}
 </style>
@@ -153,8 +161,10 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 <body>
 <div id="toolbar">
   <div class="identity">
-    <div class="title"><span class="brand-emoji" aria-hidden="true">🧠</span><span>Hermes</span> Memory Editor</div>
-    <div class="meta"><span id="connection">● Connecting</span><span>Hermes</span><code id="home"></code><span>Workspace</span><code id="workspace"></code><span id="shared-workspace" role="status" hidden></span><span id="config-warning" role="status"></span></div>
+    <div class="title"><span class="brand-emoji" aria-hidden="true">🧠</span><span>Hermes</span> Memory Editor <button id="dream-open" type="button" aria-label="Dream" title="Dream · 夜间记忆整理"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
+</svg></button></div>
+
   </div>
   <div class="actions"><span id="global-status"></span><div id="theme-control" role="group" aria-label="Appearance"><button type="button" data-theme-choice="system" aria-pressed="true" title="跟随系统">System</button><button type="button" data-theme-choice="light" aria-pressed="false" title="亮色主题">Light</button><button type="button" data-theme-choice="dark" aria-pressed="false" title="暗色主题">Dark</button></div><button id="save-all" class="primary">Save</button></div>
 </div>
@@ -165,6 +175,9 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
   <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
 </svg>
 </button></div>
+<span id="connection" aria-hidden="true" title="正在连接" hidden></span>
+<span id="connection-description" class="sr-only" role="status" aria-live="polite">正在连接</span>
+<div class="meta"><span class="meta-path"><span>Hermes</span><code id="home"></code></span><span class="meta-path"><span>Workspace</span><code id="workspace"></code></span><span id="shared-workspace" role="status" hidden></span><span id="config-warning" role="status"></span></div>
 <div id="panels" role="tabpanel" aria-label="Agent documents" tabindex="0">
   <section class="panel memory" id="panel-memory">
     <header class="panel-header">
@@ -268,7 +281,9 @@ function metrics(key,text){if(key==='soul'||key==='agents')return {raw:chars(tex
 function stateEl(key){return document.getElementById('state-'+key)}
 function setState(key,text,kind=''){const e=stateEl(key);e.textContent=text;e.className='file-state '+kind}
 function setGlobal(text,kind=''){const e=document.getElementById('global-status');e.textContent=text;e.className=kind}
-function setOnline(value){online=value;const e=document.getElementById('connection');e.textContent=value?'● Connected':'● Server disconnected';e.className=value?'connected':'disconnected'}
+// Keep one status node across tab rebuilds; it describes this browser's backend connection.
+const connection=document.getElementById('connection');
+function setOnline(value){online=value;const text=value===true?'编辑器连接正常':value===false?'编辑器连接中断':'正在连接';connection.title=text;connection.className=value===true?'connected':value===false?'disconnected':'';document.getElementById('connection-description').textContent=text;const tab=connection.closest('.agent-tab');if(tab)tab.title=text}
 function updatePath(key,data){const e=document.getElementById('path-'+key);let text='';if(!data.exists||!data.readable)text=data.path||'';else if(data.linked)text='Linked → '+(data.actual_path||data.path||'');e.textContent=text;e.title=text}
 function block(key,message,detail=''){const e=document.getElementById('blocker-'+key);e.innerHTML='<strong>'+escapeHtml(message)+'</strong>'+(detail?'<div class="detail">'+escapeHtml(detail)+'</div>':'');e.classList.add('show');editors[key]?.setDisabled(true)}
 function unblock(key){document.getElementById('blocker-'+key).classList.remove('show');syncEditors()}
@@ -301,14 +316,14 @@ function lockControls(){const active=busy();syncAgentTabs();document.getElementB
 // Keep switching validation and dirty/save/epoch safeguards in switchProfile.
 function syncAgentTabs(){
   const tabs=[...document.querySelectorAll('.agent-tab')];
-  for(const tab of tabs){const selected=tab.dataset.profile===currentProfile;tab.setAttribute('aria-selected',String(selected));tab.setAttribute('aria-disabled',String(busy()||tab.dataset.unavailable==='true'))}
+  for(const tab of tabs){const selected=tab.dataset.profile===currentProfile;tab.setAttribute('aria-selected',String(selected));tab.setAttribute('aria-disabled',String(busy()||tab.dataset.unavailable==='true'));if(selected){tab.appendChild(connection);connection.hidden=false;tab.setAttribute('aria-describedby','connection-description');tab.title=connection.title}else{tab.removeAttribute('aria-describedby');tab.removeAttribute('title')}}
   const selected=tabs.find(t=>t.dataset.profile===currentProfile);
   if(selected){document.getElementById('panels').setAttribute('aria-labelledby',selected.id);if(selected.dataset.selected!=='true')selected.scrollIntoView({block:'nearest',inline:'nearest'})}
   for(const tab of tabs)tab.dataset.selected=String(tab===selected);
 }
 function renderAgentTabs(){
   const list=document.getElementById('agent-tabs'),focused=document.activeElement?.dataset.profile;
-  list.replaceChildren();
+  connection.remove();list.replaceChildren();
   for(const [i,option] of [...document.getElementById('profile').options].entries()){
     const tab=document.createElement('button');tab.type='button';tab.className='agent-tab';tab.id='agent-tab-'+i;tab.setAttribute('role','tab');tab.setAttribute('aria-controls','panels');tab.dataset.profile=option.value;tab.dataset.unavailable=String(option.disabled);tab.textContent=option.textContent;tab.tabIndex=option.value===currentProfile?0:-1;
     tab.onclick=()=>{if(busy()||option.disabled)return;focusAgentTab(tab);switchProfile(option.value)};
@@ -339,6 +354,8 @@ async function refreshProfiles(){
 }
 async function loadProfile(){
   switching=true;epoch++;invalidateStatus();lockControls();const ticket=epoch;
+  for(const id of ['home','workspace','shared-workspace','config-warning']){const el=document.getElementById(id);el.textContent='';el.title=''}
+  document.getElementById('shared-workspace').hidden=true;document.getElementById('config-warning').style.display='none';
   try{
     for(const k of KEYS){files[k]={dirty:false,version:0,hash:null,limit:null};editors[k].setValue('');updateStats(k);updatePath(k,{});block(k,'Loading…')}
     // Network and per-file validation overlap. Adopt only after all reads settle,
@@ -346,7 +363,7 @@ async function loadProfile(){
     const [meta,documents]=await Promise.all([api('/api/meta'),Promise.all(KEYS.map(async key=>{
       try{return {data:await api('/api/read/'+key)}}catch(error){return {error}}
     }))]);if(ticket!==epoch)return;
-    document.getElementById('home').textContent=meta.home;document.getElementById('home').title=meta.home;document.getElementById('workspace').textContent=meta.workspace||'Not configured';const shared=document.getElementById('shared-workspace');shared.textContent=meta.shared_workspace?.length?'共享 Workspace · '+meta.shared_workspace.join(', '):'';shared.hidden=!shared.textContent;shared.title=shared.textContent?'AGENTS.md 与这些 Agent 共用同一个文件，修改会同时影响它们：'+meta.shared_workspace.join(', '):'';const w=document.getElementById('config-warning');w.textContent=meta.config_warning||'';w.title=w.textContent;w.style.display=w.textContent?'inline':'none';
+    document.getElementById('home').textContent=meta.home;document.getElementById('home').title=meta.home;document.getElementById('workspace').textContent=meta.workspace||'Not configured';document.getElementById('workspace').title=meta.workspace||'Not configured';const shared=document.getElementById('shared-workspace');shared.textContent=meta.shared_workspace?.length?'共享 Workspace · '+meta.shared_workspace.join(', '):'';shared.hidden=!shared.textContent;shared.title=shared.textContent?'AGENTS.md 与这些 Agent 共用同一个文件，修改会同时影响它们：'+meta.shared_workspace.join(', '):'';const w=document.getElementById('config-warning');w.textContent=meta.config_warning||'';w.title=w.textContent;w.style.display=w.textContent?'inline':'none';
     for(const [i,k] of KEYS.entries()){
       const result=documents[i];
       if(result.error){files[k].readable=false;block(k,'Read failed',result.error.message);setState(k,result.error.message,'error');setOnline(false)}
@@ -506,5 +523,6 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkStatu
 setInterval(checkStatus,30000);
 loadAll();
 </script>
+<link rel="stylesheet" href="/dream.css"><script src="/dream.js"></script>
 </body>
 </html>

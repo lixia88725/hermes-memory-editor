@@ -6,7 +6,11 @@ MIT License: ../vendor/vditor/LICENSE
 Upstream: https://github.com/Vanessa219/vditor/tree/v3.11.2
 The runtime files are copied unmodified from the pinned npm package.
 
-Heroicons outline reload/history, source/rendered-editing and document-header SVGs
+Heroicons outline reload/history, source/rendered-editing, document-header and Dream run-now SVGs
+Dream entry: unmodified moon SVG (v2.2.0), embedded in editor.html
+Source: https://github.com/tailwindlabs/heroicons/blob/v2.2.0/optimized/24/outline/moon.svg
+Dream actions: unmodified bolt path (v2.2.0), embedded in dream.js
+Source: https://github.com/tailwindlabs/heroicons/blob/v2.2.0/optimized/24/outline/bolt.svg
 Document headers: archive-box, user, sparkles, clipboard-document-check (v2.2.0)
 Copyright (c) Tailwind Labs, Inc.
 MIT License: HEROICONS-LICENSE
