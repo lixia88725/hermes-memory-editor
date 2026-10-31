@@ -105,23 +105,23 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 #history-dialog{width:min(1120px,calc(100vw - 24px));max-width:1120px;max-height:92vh;padding:20px;overflow:auto}
 #history-dialog .history-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 #history-dialog p{margin:10px 0;font-size:12px;line-height:1.6}
-.history-selection{display:block;margin-top:16px;font-size:12px;font-weight:600}#history-list{width:100%;max-width:none;margin:6px 0 12px;min-height:36px}
-.history-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.history-selection{min-width:0}#history-list{width:100%;min-width:0;max-width:100%;margin:0;min-height:36px}
+.history-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0}
 #history-mode{display:inline-flex;padding:3px;gap:3px;background:var(--tint);border:1px solid var(--border);border-radius:7px}
 #history-mode button{border:1px solid transparent;background:transparent;min-height:32px;padding:5px 12px;color:var(--muted)}
 #history-mode button[aria-pressed="true"]{background:var(--panel);border-color:var(--border);color:var(--text);font-weight:600}
 #history-summary{font-size:12px;color:var(--muted)}
 #history-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0 16px}
 .history-pane{min-width:0;border:1px solid var(--border);border-radius:6px;overflow:hidden}
-.history-pane header{padding:10px 12px;background:var(--header);border-bottom:1px solid var(--border)}
-.history-pane h3{font-size:13px;margin:0;font-weight:600}.history-pane small{display:block;color:var(--muted);font-size:11px;margin-top:4px;overflow-wrap:anywhere}
+.history-pane header{display:grid;grid-template-rows:auto 36px;gap:4px;padding:10px 12px;background:var(--header);border-bottom:1px solid var(--border);min-height:61px;box-sizing:border-box;min-width:0}
+.history-pane h3{font-size:13px;margin:0;font-weight:600}.history-pane small{display:block;align-self:center;color:var(--muted);font-size:11px;margin:0;overflow-wrap:anywhere}
 .history-content{height:38vh;min-height:180px;overflow:auto;padding:10px 0;font:12px/1.8 Menlo,monospace}
 .history-line{white-space:pre-wrap;overflow-wrap:anywhere;padding:2px 12px;min-height:1.8em}
 .history-line code{font:inherit}.change-label{display:block;font:500 10px/1.6 -apple-system,BlinkMacSystemFont,sans-serif;margin-bottom:2px}
 .history-line.current-only{background:#eaf4ed;color:#244e31;border-left:3px solid #71967b;padding-left:9px}
 .history-line.historical-only{background:#fbeeed;color:#7c332f;border-left:3px solid #ba807a;padding-left:9px}
 .history-empty{padding:12px;color:var(--muted);font:12px/1.7 -apple-system,BlinkMacSystemFont,sans-serif}
-#history-error{color:var(--red);font-size:12px;overflow-wrap:anywhere}#history-draft{color:var(--orange)}#history-dialog .choices{justify-content:flex-end}
+#history-error{color:var(--red);font-size:12px;overflow-wrap:anywhere}#history-draft{color:var(--orange)}#history-dialog .history-note{opacity:.5}#history-dialog .choices{justify-content:flex-start}
 :root[data-theme="dark"] .history-line.current-only{background:#263b2d;color:#c5dfcc;border-color:#7da787}:root[data-theme="dark"] .history-line.historical-only{background:#442d2b;color:#f0c6c1;border-color:#ba807a}
 @media(max-width:600px){#history-dialog{padding:14px;max-height:94vh}#history-preview{grid-template-columns:minmax(0,1fr);gap:12px}.history-content{height:25vh;min-height:130px}.history-tools{gap:8px}.history-top strong{font-size:16px}}
 #dream-open{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-height:30px;padding:6px;border:0;background:transparent;color:var(--muted);opacity:.65;flex-shrink:0}
@@ -245,16 +245,15 @@ dialog{width:min(440px,calc(100vw - 32px));max-width:440px;padding:26px;backgrou
 <script src="vditor-adapter.js"></script>
 <dialog id="history-dialog" aria-labelledby="history-title">
   <div class="history-top"><strong id="history-title">版本历史</strong><button id="history-close">关闭</button></div>
-  <p>比较方向：从所选历史版本到当前已保存版本。左侧来自磁盘，不含未保存草稿。选择版本仅预览，不会写入文件。</p>
-  <label class="history-selection" for="history-list">选择历史版本</label><select id="history-list" aria-label="选择历史版本"></select>
+
   <div class="history-tools"><div id="history-mode" role="group" aria-label="比较显示方式"><button id="history-full" aria-pressed="true">完整内容</button><button id="history-changes" aria-pressed="false">只看差异</button></div><span id="history-summary" role="status"></span></div>
   <div id="history-error" role="status"></div>
   <div id="history-preview">
+    <section class="history-pane" aria-labelledby="history-selected-title"><header class="history-selection"><h3 id="history-selected-title"><label for="history-list">历史版本</label></h3><select id="history-list" aria-label="选择历史版本"></select></header><div id="history-selected" class="history-content" tabindex="0" aria-label="所选历史内容"></div></section>
     <section class="history-pane" aria-labelledby="history-current-title"><header><h3 id="history-current-title">当前已保存版本</h3><small>磁盘内容 · 不含未保存草稿</small></header><div id="history-current" class="history-content" tabindex="0" aria-label="当前已保存内容"></div></section>
-    <section class="history-pane" aria-labelledby="history-selected-title"><header><h3 id="history-selected-title">所选历史版本</h3><small id="history-timestamp">尚未选择版本</small></header><div id="history-selected" class="history-content" tabindex="0" aria-label="所选历史内容"></div></section>
   </div>
   <p id="history-draft" hidden>此文件有未保存草稿，已保留。请关闭历史并先保存或处理草稿，再恢复版本。</p>
-  <p>恢复前会保留当前已保存内容，并新增一条版本记录；之后仍可回退。外部编辑的中间版本不会自动记录。</p>
+  <p class="history-note">恢复前会保留当前已保存内容，并新增一条版本记录；之后仍可回退。外部编辑的中间版本不会自动记录。</p>
   <div class="choices"><button id="history-restore" class="danger" disabled>恢复此版本…</button></div>
 </dialog>
 <script>
@@ -435,12 +434,12 @@ function historyMessage(pane,text){const e=document.createElement('div');e.class
 function renderHistoryPreview(){
   document.getElementById('history-full').setAttribute('aria-pressed',String(!historyDiff));
   document.getElementById('history-changes').setAttribute('aria-pressed',String(historyDiff));
-  const left=document.getElementById('history-current'),right=document.getElementById('history-selected');
-  left.replaceChildren();right.replaceChildren();document.getElementById('history-summary').textContent='';
+  const currentPane=document.getElementById('history-current'),selectedPane=document.getElementById('history-selected');
+  currentPane.replaceChildren();selectedPane.replaceChildren();document.getElementById('history-summary').textContent='';
   if(!historyPreview){
-    if(historyContext?.current_content!==undefined){for(const text of historyLines(historyContext.current_content)){const e=document.createElement('div');e.className='history-line';e.textContent=text;left.appendChild(e)}}
-    else historyMessage(left,'等待磁盘比较内容');
-    historyMessage(right,'请选择历史版本');return;
+    if(historyContext?.current_content!==undefined){for(const text of historyLines(historyContext.current_content)){const e=document.createElement('div');e.className='history-line';e.textContent=text;currentPane.appendChild(e)}}
+    else historyMessage(currentPane,'等待磁盘比较内容');
+    historyMessage(selectedPane,'请选择历史版本');return;
   }
   const d=historyPreview,current=historyLines(d.current_content),selected=historyLines(d.content);
   let additions=0,removals=0;
@@ -456,20 +455,21 @@ function renderHistoryPreview(){
   }
   for(const [tag,a,b,c,e] of d.comparison){
     const equal=tag==='equal';if(!equal){additions+=b-a;removals+=e-c}
-    append(left,current,a,b,equal?'equal':'current-only');append(right,selected,c,e,equal?'equal':'historical-only');
+    // API opcodes index current first, historical second; DOM order is historical → current.
+    append(selectedPane,selected,c,e,equal?'equal':'historical-only');append(currentPane,current,a,b,equal?'equal':'current-only');
   }
   document.getElementById('history-summary').textContent=additions||removals?'当前新增 '+additions+' 行 · 当前已移除 '+removals+' 行':'两个版本内容相同';
-  if(!left.childNodes.length)historyMessage(left,historyDiff?'没有当前新增内容':'（空文件）');
-  if(!right.childNodes.length)historyMessage(right,historyDiff?'没有已移除的历史内容':'（空文件）');
+  if(!currentPane.childNodes.length)historyMessage(currentPane,historyDiff?'没有当前新增内容':'（空文件）');
+  if(!selectedPane.childNodes.length)historyMessage(selectedPane,historyDiff?'没有已移除的历史内容':'（空文件）');
 }
 async function selectHistory(){
   const c=historyContext,revision=document.getElementById('history-list').value,request=++historyRequest;
   historyPreview=null;renderHistoryPreview();document.getElementById('history-restore').disabled=true;
-  document.getElementById('history-timestamp').textContent=c?.versions?.find(v=>v.revision===revision)?.displayDate||'尚未选择版本';
+
   document.getElementById('history-error').textContent='';if(!c||!revision)return;
   try{
     const d=await api('/api/preview/'+c.key+'?target_id='+c.target_id+'&revision='+revision);if(!historyOpen||request!==historyRequest)return;
-    if(c.current_hash&&c.current_hash!==d.current_hash)throw new Error('磁盘内容已变化。左侧保留打开时的比较基准，请关闭历史并重新打开。');
+    if(c.current_hash&&c.current_hash!==d.current_hash)throw new Error('磁盘内容已变化。右侧保留打开时的比较基准，请关闭历史并重新打开。');
     c.current_hash=d.current_hash;c.current_content=d.current_content;
     historyPreview=d;renderHistoryPreview();document.getElementById('history-restore').disabled=!!files[c.key].dirty;
   }
@@ -478,7 +478,7 @@ async function selectHistory(){
 async function openHistory(key){
   if(busy()||!files[key].readable)return;
   const c={key,target_id:files[key].target_id,profile:currentProfile,epoch};historyContext=c;historyOpen=true;historyDiff=false;historyPreview=null;
-  const request=++historyRequest,list=document.getElementById('history-list');list.replaceChildren();renderHistoryPreview();document.getElementById('history-title').textContent=key.toUpperCase()+'.md · 版本历史';document.getElementById('history-timestamp').textContent='尚未选择版本';document.getElementById('history-draft').hidden=!files[key].dirty;document.getElementById('history-error').textContent='正在加载…';document.getElementById('history-restore').disabled=true;document.getElementById('history-dialog').showModal();invalidateStatus();lockControls();
+  const request=++historyRequest,list=document.getElementById('history-list');list.replaceChildren();renderHistoryPreview();document.getElementById('history-title').textContent=key.toUpperCase()+'.md · 版本历史';document.getElementById('history-draft').hidden=!files[key].dirty;document.getElementById('history-error').textContent='正在加载…';document.getElementById('history-restore').disabled=true;document.getElementById('history-dialog').showModal();invalidateStatus();lockControls();
   try{const d=await api('/api/history/'+key+'?target_id='+c.target_id);if(!historyOpen||request!==historyRequest)return;
     c.current_content=d.current_content;c.current_hash=d.current_hash;renderHistoryPreview();
     const kinds={'save':'保存','restore':'恢复','before overwrite':'覆盖前保留'};
@@ -512,7 +512,7 @@ document.getElementById('history-dialog').oncancel=e=>{e.preventDefault();closeH
 document.getElementById('history-list').onchange=selectHistory;
 document.getElementById('history-full').onclick=()=>{historyDiff=false;renderHistoryPreview()};
 document.getElementById('history-changes').onclick=()=>{historyDiff=true;renderHistoryPreview()};
-document.getElementById('history-restore').onclick=()=>{const c=historyContext,revision=historyPreview?.revision,date=document.getElementById('history-timestamp').textContent;if(!c||!revision||files[c.key].dirty||c.epoch!==epoch||c.profile!==currentProfile||files[c.key].target_id!==c.target_id)return;closeHistory();restoreVersion(c.key,revision,date)};
+document.getElementById('history-restore').onclick=()=>{const c=historyContext,revision=historyPreview?.revision,date=c?.versions?.find(v=>v.revision===revision)?.displayDate||'';if(!c||!revision||files[c.key].dirty||c.epoch!==epoch||c.profile!==currentProfile||files[c.key].target_id!==c.target_id)return;closeHistory();restoreVersion(c.key,revision,date)};
 document.getElementById('profile').addEventListener('change',e=>switchProfile(e.target.value));
 document.getElementById('refresh-profiles').addEventListener('click',()=>refreshProfiles().catch(e=>setGlobal(e.message,'disconnected')));
 document.getElementById('save-all').addEventListener('click',saveAll);

@@ -49,6 +49,117 @@ class DreamTests(unittest.TestCase):
             input=json.dumps({'home':str(home), 'op':operation, 'args':args}), capture_output=True, text=True, timeout=40, check=True)
         return json.loads(result.stdout)
 
+    def test_snapshot_discovers_once_but_each_open_is_fresh(self):
+        discover = app.discover_profiles
+        with patch.object(app, 'discover_profiles', wraps=discover) as scan:
+            self.snapshot()
+            self.assertEqual(scan.call_count, 1)
+            self.snapshot()
+            self.assertEqual(scan.call_count, 2)
+
+    def test_snapshot_rejects_removed_or_rebound_later_home(self):
+        for kind in ('deleted', 'rebound', 'symlink'):
+            with self.subTest(kind=kind):
+                home = self.f.homes['beta']; old = home.with_name('beta-old')
+                worker = self.d.worker
+                def dispatch(identity, *args, **kwargs):
+                    if identity['home'] == str(self.f.homes['alpha']):
+                        home.rename(old)
+                        if kind == 'rebound': home.mkdir()
+                        if kind == 'symlink': home.symlink_to(old, target_is_directory=True)
+                    return worker(identity, *args, **kwargs)
+                try:
+                    with patch.object(self.d, 'worker', side_effect=dispatch) as calls:
+                        rows = self.d.snapshot()['rows']
+                    self.assertIn('error', rows[1], rows)
+                    self.assertEqual(calls.call_count, 1)
+                finally:
+                    if home.is_symlink(): home.unlink()
+                    elif home.exists(): home.rmdir()
+                    old.rename(home)
+
+    def native_script(self, script):
+        repo = Path.home()/'.hermes/hermes-agent'
+        result = subprocess.run([str(repo/'venv/bin/python'), '-c', script], cwd=repo,
+            env=dict(os.environ, HERMES_HOME=str(self.f.homes['alpha']),
+                     PYTHONPATH=str(Path(__file__).parent), PYTHONDONTWRITEBYTECODE='1'),
+            capture_output=True, text=True, timeout=40)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_read_worker_avoids_web_imports_and_audit_denies_side_effects(self):
+        before = fingerprint(self.f.root)
+        script = '''
+import importlib.abc, sys, json, os, socket, subprocess
+from pathlib import Path
+class NoWeb(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split('.')[0] in ('fastapi', 'pydantic') or fullname == 'hermes_cli.web_server_cron':
+            raise AssertionError('web dependency imported: '+fullname)
+sys.meta_path.insert(0, NoWeb())
+import dream_worker, contextlib
+home = Path(os.environ['HERMES_HOME']); st = home.stat()
+checks = []
+def forbidden_read(job_id):
+    operations = [lambda: (home/'forbidden').write_text('bad'),
+                  lambda: (home/'forbidden-dir').mkdir(),
+                  lambda: subprocess.run(['true']),
+                  lambda: socket.create_connection(('127.0.0.1', 9))]
+    for operation in operations:
+        try: operation()
+        except PermissionError: checks.append(True)
+        else: raise AssertionError('audit allowed side effect')
+    return None
+native_scope = dream_worker._cron_store_scope
+@contextlib.contextmanager
+def instrumented_scope(home):
+    with native_scope(home) as jobs:
+        jobs.get_job = forbidden_read
+        yield jobs
+dream_worker._cron_store_scope = instrumented_scope
+result = dream_worker.execute(dict(action='read', home=str(home), generation=[st.st_dev, st.st_ino], job_id='abcdef123456'))
+assert result['job'] is None
+print(json.dumps(checks))
+'''
+        self.assertEqual(self.native_script(script), [True]*4)
+        self.assertEqual(before, fingerprint(self.f.root))
+
+    def test_native_scope_matches_official_nested_restore_and_no_latching(self):
+        script = '''
+import json, os
+from pathlib import Path
+from cron import jobs
+from hermes_constants import get_hermes_home, get_hermes_home_override
+from hermes_cli.web_server_cron import _cron_store_scope as official
+from dream_worker import _cron_store_scope as lean
+alpha = Path(os.environ['HERMES_HOME']); beta = alpha.with_name('beta')
+def identity():
+    return (str(get_hermes_home()), str(jobs.get_cron_output_dir()), get_hermes_home_override())
+initial = identity()
+for scope in (official, lean):
+    with scope(alpha) as j:
+        assert j is jobs
+        a = identity()
+        try:
+            with scope(beta):
+                assert get_hermes_home() == beta
+                assert jobs.get_cron_output_dir() == beta/'cron/output'
+                raise ValueError('synthetic unwind')
+        except ValueError: pass
+        assert identity() == a
+    assert identity() == initial
+assert os.environ['HERMES_HOME'] == str(alpha)
+print(json.dumps(True))
+'''
+        self.assertTrue(self.native_script(script))
+
+    def test_apply_rediscovers_removed_profile_after_snapshot(self):
+        snap = self.snapshot()
+        self.f.homes.pop('alpha')
+        result = self.apply(snap)[1]
+        self.assertFalse(result['results'][0]['ok'])
+        self.assertIn('removed', result['results'][0]['error'])
+
     def test_open_preview_and_disabled_apply_are_read_only(self):
         before = fingerprint(self.f.root)
         snap = self.snapshot()
@@ -306,6 +417,64 @@ class DreamBrowserTests(unittest.TestCase):
     def settled(self, page, profile='alpha'):
         from playwright.sync_api import expect
         expect(page.locator('[data-profile="'+profile+'"] .dream-save-state')).to_have_text('已保存',timeout=60000)
+
+    def test_typography_panes_long_names_errors_and_expanded_prompt(self):
+        import shutil
+        from playwright.sync_api import sync_playwright, expect
+        f = Fixture()
+        long_name = 'visual-design-with-a-deliberately-long-agent-name'
+        try:
+            for name in ('creative-studio', 'engineering', 'finance', 'health', 'review', long_name):
+                home = f.root / 'profiles' / name
+                shutil.copytree(f.homes['beta'], home)
+                f.homes[name] = home
+            for key in ('memory', 'user'):
+                f.get_state('finance').paths[key].unlink()
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page(viewport={'width':1440,'height':1050})
+                errors = []
+                page.on('pageerror', lambda e: errors.append(str(e)))
+                self.open(page, f)
+                before = fingerprint(f.root)
+                for theme in ('light', 'dark'):
+                    page.emulate_media(color_scheme='dark' if theme == 'light' else 'light')
+                    page.locator('[data-theme-choice="'+theme+'"]').evaluate('(e)=>e.click()')
+                    expect(page.locator('html')).to_have_attribute('data-theme', theme)
+                    for width in (1440, 900, 390, 320):
+                        page.set_viewport_size({'width':width,'height':1050 if width > 760 else 844})
+                        page.locator('#dream-close').click()
+                        page.locator('#dream-open').click()
+                        expect(page.get_by_label('Settings alpha',exact=True)).to_be_enabled(timeout=60000)
+                        expect(page.locator('.dream-empty')).to_be_visible()
+                        if width > 760:
+                            self.assertTrue(page.locator('#dream-detail').evaluate('(e)=>Math.abs(e.getBoundingClientRect().height-e.parentElement.getBoundingClientRect().height)<1'))
+                        page.get_by_label('Settings alpha',exact=True).click()
+                        self.assertEqual(page.locator('#dream-dialog th').first.evaluate('(e)=>getComputedStyle(e).fontSize'), '13px')
+                        self.assertEqual(page.locator('.dream-agent-name').first.evaluate('(e)=>getComputedStyle(e).fontSize'), '13px')
+                        self.assertGreaterEqual(float(page.locator('.dream-checks small').first.evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)')),13)
+                        self.assertTrue(page.locator('.dream-checks strong').first.evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)<=parseFloat(getComputedStyle(document.querySelector("#dream-detail-title")).fontSize)'))
+                        if width > 760:
+                            self.assertTrue(page.locator('.dream-section-heading').evaluate('(e)=>Math.abs(e.getBoundingClientRect().top-document.querySelector("thead").getBoundingClientRect().top)<1'))
+                            self.assertTrue(page.locator('.dream-section-heading').evaluate('(e)=>Math.abs(e.getBoundingClientRect().height-document.querySelector("thead").getBoundingClientRect().height)<2'))
+                        page.get_by_label('Settings finance',exact=True).click()
+                        expect(page.locator('.dream-issue').first).to_be_visible()
+                        page.get_by_label('Settings '+long_name,exact=True).click()
+                        expect(page.locator('#dream-detail-title')).to_have_text(long_name)
+                        page.locator('#dream-preview summary').click()
+                        expect(page.locator('#dream-prompt')).not_to_have_text('正在生成…',timeout=60000)
+                        expect(page.locator('#dream-prompt')).not_to_be_empty()
+                        self.assertTrue(page.locator('#dream-prompt').evaluate('(e)=>e.scrollWidth<=e.clientWidth'))
+                        self.assertTrue(page.locator('#dream-dialog').evaluate('(e)=>e.scrollWidth<=e.clientWidth'))
+                        self.assertTrue(page.locator('html').evaluate('(e)=>e.scrollWidth<=innerWidth'))
+                        page.locator('.dream-table-wrap').evaluate('(e)=>e.scrollLeft=e.scrollWidth')
+                        page.locator('#dream-run-all').scroll_into_view_if_needed()
+                        expect(page.locator('#dream-run-all')).to_be_in_viewport()
+                self.assertEqual(before, fingerprint(f.root), 'Visual inspection must not write fixture settings/documents')
+                self.assertEqual(errors, [])
+                browser.close()
+        finally:
+            f.close()
 
     def test_autosave_queue_focus_profiles_close_and_responsive_themes(self):
         from playwright.sync_api import sync_playwright, expect

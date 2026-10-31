@@ -145,8 +145,10 @@ class Dream:
             raise ValueError('Dream storage changed')
         self.app.atomic_write_bytes(self.path, json.dumps(data, ensure_ascii=False, indent=2).encode(), 0o600)
 
-    def resolve(self, name):
-        matches = [p for p in self.app.discover_profiles() if p['name'] == name]
+    def resolve(self, name, inventory=None):
+        # Only snapshot passes a request-local inventory. Mutations and preview
+        # independently rediscover; no Profile status survives an opening.
+        matches = [p for p in (self.app.discover_profiles() if inventory is None else inventory) if p['name'] == name]
         if len(matches) != 1:
             raise ValueError('Unknown or removed Profile')
         declared = Path(matches[0]['home'])
@@ -155,6 +157,8 @@ class Dream:
         state = self.app.EditorState(declared)
         state.profile = name
         identity, problem = context_identity(state)
+        if inventory is not None and matches[0].get('_generation') != identity['generation']:
+            raise ValueError('Profile home generation changed during snapshot')
         return state, identity, problem
 
     def worker(self, identity, action, job_id=None, **extra) -> dict:
@@ -173,8 +177,8 @@ class Dream:
             raise ValueError(data.get('error', 'Hermes cron adapter failed'))
         return data
 
-    def row(self, name, data):
-        state, identity, problem = self.resolve(name)
+    def row(self, name, data, inventory=None):
+        state, identity, problem = self.resolve(name, inventory)
         saved = data['profiles'].get(name)
         if saved and saved['identity'] != ownership(identity):
             raise ValueError('Profile or workspace binding changed; refusing managed job')
@@ -214,9 +218,23 @@ class Dream:
     def snapshot(self):
         data = self.load()
         rows = []
-        for p in self.app.discover_profiles():
+        inventory = [dict(p) for p in self.app.discover_profiles()]
+        # Pin all home generations before any slow worker. A removed/replaced
+        # later row must fail rather than silently bind to a newly created home.
+        for p in inventory:
             try:
-                rows.append(self.public(self.row(p['name'], data)))
+                home = Path(p['home'])
+                if home.is_symlink() or home.resolve(strict=True) != home:
+                    raise ValueError('Profile home must be canonical and not a symlink')
+                st = home.stat()
+                p['_generation'] = [st.st_dev, st.st_ino]
+            except (OSError, ValueError) as exc:
+                p['_error'] = str(exc)
+        for p in inventory:
+            try:
+                if '_error' in p:
+                    raise ValueError(p['_error'])
+                rows.append(self.public(self.row(p['name'], data, inventory)))
             except Exception as exc:
                 rows.append({'profile': p['name'], 'error': str(exc)})
         return {'modules': data['modules'], 'library_version': digest(data['modules']), 'rows': rows,

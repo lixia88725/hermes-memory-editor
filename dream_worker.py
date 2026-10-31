@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Short-lived Hermes interpreter adapter. stdin/stdout JSON; never a scheduler.
 
-Reuses the official Web UI's context-local store scope, official job mutations
-and scheduler registration. Exact IDs only; never the dashboard's ID fallback.
+Reuses native context-local home/store APIs, official job mutations and
+scheduler registration. Exact IDs only; never the dashboard's ID fallback.
 """
 import contextlib
 import hashlib
@@ -14,6 +14,19 @@ import sys
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+@contextlib.contextmanager
+def _cron_store_scope(home):
+    """Same native scopes as Web UI, without importing its HTTP/model layer."""
+    from cron import jobs
+    from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+    token = set_hermes_home_override(str(home))
+    try:
+        with jobs.use_cron_store(home):
+            yield jobs
+    finally:
+        reset_hermes_home_override(token)
 
 
 def execute(req):
@@ -52,7 +65,6 @@ def execute(req):
         elif event in ('subprocess.Popen', 'os.system', 'socket.connect'):
             raise PermissionError('Dream adapter does not execute jobs or contact services')
     sys.addaudithook(audit)
-    from hermes_cli.web_server_cron import _cron_store_scope
     home = Path(req['home'])
     if str(home.resolve(strict=True)) != req['home'] or home.is_symlink():
         raise ValueError('Profile home changed')
